@@ -1,22 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2006 by Magnus Lundin                                   *
  *   lundin@mlu.mine.nu                                                    *
  *                                                                         *
  *   Copyright (C) 2008 by Spencer Oliver                                  *
  *   spen@spen-soft.co.uk                                                  *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /***************************************************************************
@@ -464,7 +453,7 @@ FLASH_BANK_COMMAND_HANDLER(stellaris_flash_bank_command)
 	if (CMD_ARGC < 6)
 		return ERROR_COMMAND_SYNTAX_ERROR;
 
-	stellaris_info = calloc(sizeof(struct stellaris_flash_bank), 1);
+	stellaris_info = calloc(1, sizeof(struct stellaris_flash_bank));
 	bank->base = 0x0;
 	bank->driver_priv = stellaris_info;
 
@@ -541,7 +530,7 @@ static void stellaris_set_flash_timing(struct flash_bank *bank)
 	target_write_u32(target, SCB_BASE | USECRL, usecrl);
 }
 
-static const unsigned rcc_xtal[32] = {
+static const unsigned int rcc_xtal[32] = {
 	[0x00] = 1000000,		/* no pll */
 	[0x01] = 1843200,		/* no pll */
 	[0x02] = 2000000,		/* no pll */
@@ -580,7 +569,7 @@ static void stellaris_read_clock_info(struct flash_bank *bank)
 	struct stellaris_flash_bank *stellaris_info = bank->driver_priv;
 	struct target *target = bank->target;
 	uint32_t rcc, rcc2, pllcfg, sysdiv, usesysdiv, bypass, oscsrc;
-	unsigned xtal;
+	unsigned int xtal;
 	unsigned long mainfreq;
 
 	target_read_u32(target, SCB_BASE | RCC, &rcc);
@@ -1040,7 +1029,7 @@ static int stellaris_write_block(struct flash_bank *bank,
 	int retval = ERROR_OK;
 
 	/* power of two, and multiple of word size */
-	static const unsigned buf_min = 128;
+	static const unsigned int buf_min = 128;
 
 	/* for small buffers it's faster not to download an algorithm */
 	if (wcount * 4 < buf_min)
@@ -1067,8 +1056,8 @@ static int stellaris_write_block(struct flash_bank *bank,
 			target_free_working_area(target, write_algorithm);
 			return ERROR_TARGET_RESOURCE_NOT_AVAILABLE;
 		}
-		LOG_DEBUG("retry target_alloc_working_area(%s, size=%u)",
-				target_name(target), (unsigned) buffer_size);
+		LOG_DEBUG("retry target_alloc_working_area(%s, size=%" PRIu32 ")",
+				target_name(target), buffer_size);
 	}
 
 	target_write_buffer(target, write_algorithm->address,
@@ -1353,7 +1342,7 @@ COMMAND_HANDLER(stellaris_handle_recover_command)
 	 * cycle to recover.
 	 */
 
-	Jim_Eval_Named(CMD_CTX->interp, "catch { hla_command \"debug unlock\" }", 0, 0);
+	Jim_Eval_Named(CMD_CTX->interp, "catch { hla_command \"debug unlock\" }", NULL, 0);
 	if (!strcmp(Jim_GetString(Jim_GetResult(CMD_CTX->interp), NULL), "0")) {
 		retval = ERROR_OK;
 		goto user_action;

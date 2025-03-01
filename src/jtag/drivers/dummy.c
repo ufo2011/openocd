@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2008 by Øyvind Harboe                                   *
  *   oyvind.harboe@zylin.com                                               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -25,7 +14,7 @@
 #include "hello.h"
 
 /* my private tap controller state, which tracks state for calling code */
-static tap_state_t dummy_state = TAP_RESET;
+static enum tap_state dummy_state = TAP_RESET;
 
 static int dummy_clock;		/* edge detector */
 
@@ -33,7 +22,7 @@ static int clock_count;		/* count clocks in any stable state, only stable states
 
 static uint32_t dummy_data;
 
-static bb_value_t dummy_read(void)
+static enum bb_value dummy_read(void)
 {
 	int data = 1 & dummy_data;
 	dummy_data = (dummy_data >> 1) | (1 << 31);
@@ -45,7 +34,7 @@ static int dummy_write(int tck, int tms, int tdi)
 	/* TAP standard: "state transitions occur on rising edge of clock" */
 	if (tck != dummy_clock) {
 		if (tck) {
-			tap_state_t old_state = dummy_state;
+			enum tap_state old_state = dummy_state;
 			dummy_state = tap_state_transition(old_state, tms);
 
 			if (old_state != dummy_state) {
@@ -83,12 +72,12 @@ static int dummy_reset(int trst, int srst)
 	return ERROR_OK;
 }
 
-static int dummy_led(int on)
+static int dummy_led(bool on)
 {
 	return ERROR_OK;
 }
 
-static struct bitbang_interface dummy_bitbang = {
+static const struct bitbang_interface dummy_bitbang = {
 		.read = &dummy_read,
 		.write = &dummy_write,
 		.blink = &dummy_led,

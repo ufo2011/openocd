@@ -1,34 +1,24 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
  *                                                                         *
  *   Copyright (C) 2007,2008 Øyvind Harboe                                 *
  *   oyvind.harboe@zylin.com                                               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifndef OPENOCD_JTAG_DRIVERS_BITBANG_H
 #define OPENOCD_JTAG_DRIVERS_BITBANG_H
 
 #include <jtag/swd.h>
+#include <jtag/commands.h>
 
-typedef enum {
+enum bb_value {
 	BB_LOW,
 	BB_HIGH,
 	BB_ERROR
-} bb_value_t;
+};
 
 /** Low level callbacks (for bitbang).
  *
@@ -39,7 +29,7 @@ typedef enum {
  * increase throughput. */
 struct bitbang_interface {
 	/** Sample TDO and return the value. */
-	bb_value_t (*read)(void);
+	enum bb_value (*read)(void);
 
 	/** The number of TDO samples that can be buffered up before the caller has
 	 * to call read_sample. */
@@ -49,13 +39,13 @@ struct bitbang_interface {
 	int (*sample)(void);
 
 	/** Return the next unread value from the buffer. */
-	bb_value_t (*read_sample)(void);
+	enum bb_value (*read_sample)(void);
 
 	/** Set TCK, TMS, and TDI to the given values. */
 	int (*write)(int tck, int tms, int tdi);
 
 	/** Blink led (optional). */
-	int (*blink)(int on);
+	int (*blink)(bool on);
 
 	/** Sample SWDIO and return the value. */
 	int (*swdio_read)(void);
@@ -65,12 +55,18 @@ struct bitbang_interface {
 
 	/** Set SWCLK and SWDIO to the given value. */
 	int (*swd_write)(int swclk, int swdio);
+
+	/** Sleep for some number of microseconds. **/
+	int (*sleep)(unsigned int microseconds);
+
+	/** Force a flush. */
+	int (*flush)(void);
 };
 
 extern const struct swd_driver bitbang_swd;
 
-int bitbang_execute_queue(void);
+int bitbang_execute_queue(struct jtag_command *cmd_queue);
 
-extern struct bitbang_interface *bitbang_interface;
+extern const struct bitbang_interface *bitbang_interface;
 
 #endif /* OPENOCD_JTAG_DRIVERS_BITBANG_H */

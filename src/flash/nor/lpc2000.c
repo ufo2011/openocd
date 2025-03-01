@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
@@ -14,19 +16,6 @@
  *                                                                         *
  *   LPC8N04/HNS31xx support Copyright (C) 2018                            *
  *   by Jean-Christian de Rivaz jcdr [at] innodelec [dot] ch               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -283,7 +272,7 @@
 
 #define LPC11XX_REG_SECTORS	24
 
-typedef enum {
+enum lpc2000_variant {
 	LPC2000_V1,
 	LPC2000_V2,
 	LPC1700,
@@ -293,10 +282,10 @@ typedef enum {
 	LPC1500,
 	LPC54100,
 	LPC_AUTO,
-} lpc2000_variant;
+};
 
 struct lpc2000_flash_bank {
-	lpc2000_variant variant;
+	enum lpc2000_variant variant;
 	uint32_t cclk;
 	int cmd51_dst_boundary;
 	int calc_checksum;

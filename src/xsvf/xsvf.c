@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
@@ -10,19 +12,6 @@
  *                                                                         *
  *   Copyright (C) 2009 SoftPLC Corporation. http://softplc.com            *
  *   Dick Hollenbeck <dick@softplc.com>                                    *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /* The specification for SVF is available here:
@@ -122,10 +111,10 @@ TDO  (1);
 
 static int xsvf_fd;
 
-/* map xsvf tap state to an openocd "tap_state_t" */
-static tap_state_t xsvf_to_tap(int xsvf_state)
+/* map xsvf tap state to an openocd "enum tap_state" */
+static enum tap_state xsvf_to_tap(int xsvf_state)
 {
-	tap_state_t ret;
+	enum tap_state ret;
 
 	switch (xsvf_state) {
 		case XSV_RESET:
@@ -207,16 +196,16 @@ COMMAND_HANDLER(handle_xsvf_command)
 	int xruntest = 0;					/* number of TCK cycles OR *microseconds */
 	int xrepeat = 0;					/* number of retries */
 
-	tap_state_t xendir = TAP_IDLE;			/* see page 8 of the SVF spec, initial
+	enum tap_state xendir = TAP_IDLE;			/* see page 8 of the SVF spec, initial
 							 *xendir to be TAP_IDLE */
-	tap_state_t xenddr = TAP_IDLE;
+	enum tap_state xenddr = TAP_IDLE;
 
 	uint8_t opcode;
 	uint8_t uc = 0;
 	long file_offset = 0;
 
 	int loop_count = 0;
-	tap_state_t loop_state = TAP_IDLE;
+	enum tap_state loop_state = TAP_IDLE;
 	int loop_clocks = 0;
 	int loop_usecs = 0;
 
@@ -227,8 +216,8 @@ COMMAND_HANDLER(handle_xsvf_command)
 	int verbose = 1;
 
 	bool collecting_path = false;
-	tap_state_t path[XSTATE_MAX_PATH];
-	unsigned pathlen = 0;
+	enum tap_state path[XSTATE_MAX_PATH];
+	unsigned int pathlen = 0;
 
 	/* a flag telling whether to clock TCK during waits,
 	 * or simply sleep, controlled by virt2
@@ -283,7 +272,7 @@ COMMAND_HANDLER(handle_xsvf_command)
 		 * or terminate a path.
 		 */
 		if (collecting_path) {
-			tap_state_t mystate;
+			enum tap_state mystate;
 
 			switch (opcode) {
 				case XCOMMENT:
@@ -466,7 +455,7 @@ COMMAND_HANDLER(handle_xsvf_command)
 						 * will be skipped entirely if xrepeat is set to zero.
 						 */
 
-						static tap_state_t exception_path[] = {
+						static enum tap_state exception_path[] = {
 							TAP_DREXIT2,
 							TAP_DRSHIFT,
 							TAP_DREXIT1,
@@ -574,7 +563,7 @@ COMMAND_HANDLER(handle_xsvf_command)
 
 			case XSTATE:
 			{
-				tap_state_t mystate;
+				enum tap_state mystate;
 
 				if (read(xsvf_fd, &uc, 1) < 0) {
 					do_abort = 1;
@@ -665,7 +654,7 @@ COMMAND_HANDLER(handle_xsvf_command)
 				uint8_t short_buf[2];
 				uint8_t *ir_buf;
 				int bitcount;
-				tap_state_t my_end_state = xruntest ? TAP_IDLE : xendir;
+				enum tap_state my_end_state = xruntest ? TAP_IDLE : xendir;
 
 				if (opcode == XSIR) {
 					/* one byte bitcount */
@@ -755,15 +744,15 @@ COMMAND_HANDLER(handle_xsvf_command)
 				uint8_t end;
 				uint8_t delay_buf[4];
 
-				tap_state_t wait_state;
-				tap_state_t end_state;
+				enum tap_state wait_state;
+				enum tap_state end_state;
 				int delay;
 
 				if (read(xsvf_fd, &wait_local, 1) < 0
-					|| read(xsvf_fd, &end, 1) < 0
-					|| read(xsvf_fd, delay_buf, 4) < 0) {
-						do_abort = 1;
-						break;
+						|| read(xsvf_fd, &end, 1) < 0
+						|| read(xsvf_fd, delay_buf, 4) < 0) {
+					do_abort = 1;
+					break;
 				}
 
 				wait_state = xsvf_to_tap(wait_local);
@@ -799,8 +788,8 @@ COMMAND_HANDLER(handle_xsvf_command)
 				uint8_t usecs_buf[4];
 				uint8_t wait_local;
 				uint8_t end;
-				tap_state_t wait_state;
-				tap_state_t end_state;
+				enum tap_state wait_state;
+				enum tap_state end_state;
 				int clock_count;
 				int usecs;
 

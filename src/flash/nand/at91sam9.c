@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /*
  * Copyright (C) 2009 by Dean Glazeski
  * dnglaze@gmail.com
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -400,9 +389,8 @@ static int at91sam9_read_page(struct nand_device *nand, uint32_t page,
 				uint32_t bit = parity & 0x0F;
 
 				data[word] ^= (0x1) << bit;
-				LOG_INFO("Data word %d, bit %d corrected.",
-					(unsigned) word,
-					(unsigned) bit);
+				LOG_INFO("Data word %" PRIu32 ", bit %" PRIu32 " corrected.",
+					word, bit);
 			}
 		}
 
@@ -544,7 +532,7 @@ COMMAND_HANDLER(handle_at91sam9_cle_command)
 {
 	struct nand_device *nand = NULL;
 	struct at91sam9_nand *info = NULL;
-	unsigned num, address_line;
+	unsigned int num, address_line;
 
 	if (CMD_ARGC != 2) {
 		command_print(CMD, "incorrect number of arguments for 'at91sam9 cle' command");
@@ -574,7 +562,7 @@ COMMAND_HANDLER(handle_at91sam9_ale_command)
 {
 	struct nand_device *nand = NULL;
 	struct at91sam9_nand *info = NULL;
-	unsigned num, address_line;
+	unsigned int num, address_line;
 
 	if (CMD_ARGC != 2)
 		return ERROR_COMMAND_SYNTAX_ERROR;
@@ -602,7 +590,7 @@ COMMAND_HANDLER(handle_at91sam9_rdy_busy_command)
 {
 	struct nand_device *nand = NULL;
 	struct at91sam9_nand *info = NULL;
-	unsigned num, base_pioc, pin_num;
+	unsigned int num, base_pioc, pin_num;
 
 	if (CMD_ARGC != 3)
 		return ERROR_COMMAND_SYNTAX_ERROR;
@@ -633,7 +621,7 @@ COMMAND_HANDLER(handle_at91sam9_ce_command)
 {
 	struct nand_device *nand = NULL;
 	struct at91sam9_nand *info = NULL;
-	unsigned num, base_pioc, pin_num;
+	unsigned int num, base_pioc, pin_num;
 
 	if (CMD_ARGC != 3)
 		return ERROR_COMMAND_SYNTAX_ERROR;

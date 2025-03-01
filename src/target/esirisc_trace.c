@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2018 by Square, Inc.                                    *
  *   Steven Stallion <stallion@squareup.com>                               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -96,7 +85,7 @@ static int esirisc_trace_clear_status(struct target *target)
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_STATUS, ~0);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: Status", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: Status");
 		return retval;
 	}
 
@@ -113,7 +102,7 @@ static int esirisc_trace_get_status(struct target *target, uint32_t *status)
 
 	int retval = esirisc_jtag_read_csr(jtag_info, CSR_TRACE, CSR_TRACE_STATUS, status);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to read Trace CSR: Status", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to read Trace CSR: Status");
 		return retval;
 	}
 
@@ -132,7 +121,7 @@ static int esirisc_trace_start(struct target *target)
 
 	retval = esirisc_jtag_read_csr(jtag_info, CSR_TRACE, CSR_TRACE_CONTROL, &control);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to read Trace CSR: Control", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to read Trace CSR: Control");
 		return retval;
 	}
 
@@ -140,7 +129,7 @@ static int esirisc_trace_start(struct target *target)
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_CONTROL, control);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: Control", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: Control");
 		return retval;
 	}
 
@@ -159,7 +148,7 @@ static int esirisc_trace_stop(struct target *target)
 
 	retval = esirisc_jtag_read_csr(jtag_info, CSR_TRACE, CSR_TRACE_CONTROL, &control);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to read Trace CSR: Control", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to read Trace CSR: Control");
 		return retval;
 	}
 
@@ -167,7 +156,7 @@ static int esirisc_trace_stop(struct target *target)
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_CONTROL, control);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: Control", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: Control");
 		return retval;
 	}
 
@@ -206,7 +195,7 @@ static int esirisc_trace_init(struct target *target)
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_CONTROL, control);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: Control", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: Control");
 		return retval;
 	}
 
@@ -214,14 +203,14 @@ static int esirisc_trace_init(struct target *target)
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_BUFFER_START,
 			trace_info->buffer_start);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: BufferStart", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: BufferStart");
 		return retval;
 	}
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_BUFFER_END,
 			trace_info->buffer_end);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: BufferEnd", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: BufferEnd");
 		return retval;
 	}
 
@@ -232,7 +221,7 @@ static int esirisc_trace_init(struct target *target)
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_BUFFER_CUR,
 			trace_info->buffer_start);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: BufferCurrent", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: BufferCurrent");
 		return retval;
 	}
 
@@ -252,7 +241,7 @@ static int esirisc_trace_init(struct target *target)
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_TRIGGER, trigger);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: Trigger", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: Trigger");
 		return retval;
 	}
 
@@ -260,14 +249,14 @@ static int esirisc_trace_init(struct target *target)
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_START_DATA,
 			trace_info->start_data);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: StartData", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: StartData");
 		return retval;
 	}
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_START_MASK,
 			trace_info->start_mask);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: StartMask", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: StartMask");
 		return retval;
 	}
 
@@ -275,14 +264,14 @@ static int esirisc_trace_init(struct target *target)
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_STOP_DATA,
 			trace_info->stop_data);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: StopData", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: StopData");
 		return retval;
 	}
 
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_STOP_MASK,
 			trace_info->stop_mask);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: StopMask", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: StopMask");
 		return retval;
 	}
 
@@ -290,7 +279,7 @@ static int esirisc_trace_init(struct target *target)
 	retval = esirisc_jtag_write_csr(jtag_info, CSR_TRACE, CSR_TRACE_DELAY,
 			trace_info->delay_cycles);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to write Trace CSR: Delay", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to write Trace CSR: Delay");
 		return retval;
 	}
 
@@ -298,9 +287,9 @@ static int esirisc_trace_init(struct target *target)
 }
 
 static int esirisc_trace_buf_get_u32(uint8_t *buffer, uint32_t size,
-		unsigned *pos, unsigned count, uint32_t *value)
+		unsigned int *pos, unsigned int count, uint32_t *value)
 {
-	const unsigned num_bits = size * 8;
+	const unsigned int num_bits = size * 8;
 
 	if (*pos+count > num_bits)
 		return ERROR_FAIL;
@@ -312,7 +301,7 @@ static int esirisc_trace_buf_get_u32(uint8_t *buffer, uint32_t size,
 }
 
 static int esirisc_trace_buf_get_pc(struct target *target, uint8_t *buffer, uint32_t size,
-		unsigned *pos, uint32_t *value)
+		unsigned int *pos, uint32_t *value)
 {
 	struct esirisc_common *esirisc = target_to_esirisc(target);
 	struct esirisc_trace *trace_info = &esirisc->trace_info;
@@ -337,7 +326,7 @@ static int esirisc_trace_read_memory(struct target *target, target_addr_t addres
 
 	retval = target_read_memory(target, address, 1, size, buffer);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to read trace data", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to read trace data");
 		return retval;
 	}
 
@@ -357,7 +346,7 @@ static int esirisc_trace_read_buffer(struct target *target, uint8_t *buffer)
 
 	retval = esirisc_jtag_read_csr(jtag_info, CSR_TRACE, CSR_TRACE_BUFFER_CUR, &buffer_cur);
 	if (retval != ERROR_OK) {
-		LOG_ERROR("%s: failed to read Trace CSR: BufferCurrent", target_name(target));
+		LOG_TARGET_ERROR(target, "failed to read Trace CSR: BufferCurrent");
 		return retval;
 	}
 
@@ -391,7 +380,7 @@ static int esirisc_trace_analyze_full(struct command_invocation *cmd, uint8_t *b
 	const uint32_t num_bits = size * 8;
 	int retval;
 
-	unsigned pos = 0;
+	unsigned int pos = 0;
 	while (pos < num_bits) {
 		uint32_t id;
 
@@ -495,7 +484,7 @@ static int esirisc_trace_analyze_simple(struct command_invocation *cmd, uint8_t 
 	const uint32_t num_bits = size * 8;
 	int retval;
 
-	unsigned pos = 0;
+	unsigned int pos = 0;
 	while (pos < num_bits) {
 		uint32_t pc;
 
