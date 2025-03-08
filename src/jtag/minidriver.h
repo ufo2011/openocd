@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
@@ -7,19 +9,6 @@
  *                                                                         *
  *   Copyright (C) 2009 Zachary T Welch                                    *
  *   zw@superlucidity.net                                                  *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifndef OPENOCD_JTAG_MINIDRIVER_H
@@ -49,23 +38,23 @@
 
 int interface_jtag_add_ir_scan(struct jtag_tap *active,
 		const struct scan_field *fields,
-		tap_state_t endstate);
+		enum tap_state endstate);
 int interface_jtag_add_plain_ir_scan(
 		int num_bits, const uint8_t *out_bits, uint8_t *in_bits,
-		tap_state_t endstate);
+		enum tap_state endstate);
 
 int interface_jtag_add_dr_scan(struct jtag_tap *active,
 		int num_fields, const struct scan_field *fields,
-		tap_state_t endstate);
+		enum tap_state endstate);
 int interface_jtag_add_plain_dr_scan(
 		int num_bits, const uint8_t *out_bits, uint8_t *in_bits,
-		tap_state_t endstate);
+		enum tap_state endstate);
 
 int interface_jtag_add_tlr(void);
-int interface_jtag_add_pathmove(int num_states, const tap_state_t *path);
-int interface_jtag_add_runtest(int num_cycles, tap_state_t endstate);
+int interface_jtag_add_pathmove(unsigned int num_states, const enum tap_state *path);
+int interface_jtag_add_runtest(unsigned int num_cycles, enum tap_state endstate);
 
-int interface_add_tms_seq(unsigned num_bits,
+int interface_add_tms_seq(unsigned int num_bits,
 		const uint8_t *bits, enum tap_state state);
 
 /**
@@ -78,7 +67,7 @@ int interface_add_tms_seq(unsigned num_bits,
  */
 int interface_jtag_add_reset(int trst, int srst);
 int interface_jtag_add_sleep(uint32_t us);
-int interface_jtag_add_clocks(int num_cycles);
+int interface_jtag_add_clocks(unsigned int num_cycles);
 int interface_jtag_execute_queue(void);
 
 /**

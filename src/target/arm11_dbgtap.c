@@ -1,21 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2008 digenius technology GmbH.                          *
  *   Michael Bruck                                                         *
  *                                                                         *
  *   Copyright (C) 2008,2009 Oyvind Harboe oyvind.harboe@zylin.com         *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -42,13 +31,13 @@ behavior of the FTDI driver IIRC was to go via RTI.
 Conversely there may be other places in this code where the ARM11 code relies
 on the driver to hit through RTI when coming from Update-?R.
 */
-static const tap_state_t arm11_move_pi_to_si_via_ci[] = {
+static const enum tap_state arm11_move_pi_to_si_via_ci[] = {
 	TAP_IREXIT2, TAP_IRUPDATE, TAP_DRSELECT, TAP_IRSELECT, TAP_IRCAPTURE, TAP_IRSHIFT
 };
 
 /* REVISIT no error handling here! */
 static void arm11_add_ir_scan_vc(struct jtag_tap *tap, struct scan_field *fields,
-	tap_state_t state)
+	enum tap_state state)
 {
 	if (cmd_queue_cur_state == TAP_IRPAUSE)
 		jtag_add_pathmove(ARRAY_SIZE(arm11_move_pi_to_si_via_ci),
@@ -57,13 +46,13 @@ static void arm11_add_ir_scan_vc(struct jtag_tap *tap, struct scan_field *fields
 	jtag_add_ir_scan(tap, fields, state);
 }
 
-static const tap_state_t arm11_move_pd_to_sd_via_cd[] = {
+static const enum tap_state arm11_move_pd_to_sd_via_cd[] = {
 	TAP_DREXIT2, TAP_DRUPDATE, TAP_DRSELECT, TAP_DRCAPTURE, TAP_DRSHIFT
 };
 
 /* REVISIT no error handling here! */
 void arm11_add_dr_scan_vc(struct jtag_tap *tap, int num_fields, struct scan_field *fields,
-	tap_state_t state)
+	enum tap_state state)
 {
 	if (cmd_queue_cur_state == TAP_DRPAUSE)
 		jtag_add_pathmove(ARRAY_SIZE(arm11_move_pd_to_sd_via_cd),
@@ -132,7 +121,7 @@ static const char *arm11_ir_to_string(uint8_t ir)
  *
  * \remarks			This adds to the JTAG command queue but does \em not execute it.
  */
-void arm11_add_ir(struct arm11_common *arm11, uint8_t instr, tap_state_t state)
+void arm11_add_ir(struct arm11_common *arm11, uint8_t instr, enum tap_state state)
 {
 	struct jtag_tap *tap = arm11->arm.target->tap;
 
@@ -192,7 +181,7 @@ static void arm11_in_handler_scan_n(uint8_t *in_value)
  */
 
 int arm11_add_debug_scan_n(struct arm11_common *arm11,
-	uint8_t chain, tap_state_t state)
+	uint8_t chain, enum tap_state state)
 {
 	/* Don't needlessly switch the scan chain.
 	 * NOTE:  the ITRSEL instruction fakes SCREG changing;
@@ -251,9 +240,9 @@ int arm11_add_debug_scan_n(struct arm11_common *arm11,
  * to ensure that the rDTR is ready before that Run-Test/Idle state.
  */
 static void arm11_add_debug_inst(struct arm11_common *arm11,
-	uint32_t inst, uint8_t *flag, tap_state_t state)
+	uint32_t inst, uint8_t *flag, enum tap_state state)
 {
-	JTAG_DEBUG("INST <= 0x%08x", (unsigned) inst);
+	JTAG_DEBUG("INST <= 0x%08" PRIx32, inst);
 
 	struct scan_field itr[2];
 
@@ -293,9 +282,7 @@ int arm11_read_dscr(struct arm11_common *arm11)
 	CHECK_RETVAL(jtag_execute_queue());
 
 	if (arm11->dscr != dscr)
-		JTAG_DEBUG("DSCR  = %08x (OLD %08x)",
-			(unsigned) dscr,
-			(unsigned) arm11->dscr);
+		JTAG_DEBUG("DSCR  = %08" PRIx32 " (OLD %08" PRIx32 ")", dscr, arm11->dscr);
 
 	arm11->dscr = dscr;
 
@@ -328,9 +315,7 @@ int arm11_write_dscr(struct arm11_common *arm11, uint32_t dscr)
 
 	CHECK_RETVAL(jtag_execute_queue());
 
-	JTAG_DEBUG("DSCR <= %08x (OLD %08x)",
-		(unsigned) dscr,
-		(unsigned) arm11->dscr);
+	JTAG_DEBUG("DSCR <= %08" PRIx32 " (OLD %08" PRIx32 ")", dscr, arm11->dscr);
 
 	arm11->dscr = dscr;
 
@@ -520,8 +505,8 @@ int arm11_run_instr_data_to_core(struct arm11_common *arm11,
 
 		CHECK_RETVAL(jtag_execute_queue());
 
-		JTAG_DEBUG("DTR  _data %08x  ready %d  n_retry %d",
-			(unsigned) _data, ready, n_retry);
+		JTAG_DEBUG("DTR  _data %08" PRIx32 "  ready %d  n_retry %d",
+			_data, ready, n_retry);
 
 		int64_t then = 0;
 
@@ -557,7 +542,7 @@ int arm11_run_instr_data_to_core(struct arm11_common *arm11,
  *  https://lists.berlios.de/pipermail/openocd-development/2009-July/009698.html
  *  https://lists.berlios.de/pipermail/openocd-development/2009-August/009865.html
  */
-static const tap_state_t arm11_move_drpause_idle_drpause_with_delay[] = {
+static const enum tap_state arm11_move_drpause_idle_drpause_with_delay[] = {
 	TAP_DREXIT2, TAP_DRUPDATE, TAP_IDLE, TAP_IDLE, TAP_IDLE, TAP_DRSELECT, TAP_DRCAPTURE,
 	TAP_DRSHIFT
 };
@@ -582,8 +567,8 @@ static int arm11_run_instr_data_to_core_noack_inner(struct jtag_tap *tap,
 	chain5_fields[2].in_value               = NULL;
 
 	uint8_t *readies;
-	unsigned readies_num = count;
-	unsigned bytes = sizeof(*readies)*readies_num;
+	unsigned int readies_num = count;
+	unsigned int bytes = sizeof(*readies) * readies_num;
 
 	readies = malloc(bytes);
 	if (!readies) {
@@ -607,7 +592,7 @@ static int arm11_run_instr_data_to_core_noack_inner(struct jtag_tap *tap,
 
 	int retval = jtag_execute_queue();
 	if (retval == ERROR_OK) {
-		unsigned error_count = 0;
+		unsigned int error_count = 0;
 
 		for (size_t i = 0; i < readies_num; i++) {
 			if (readies[i] != 1)
@@ -765,8 +750,8 @@ int arm11_run_instr_data_from_core(struct arm11_common *arm11,
 
 			CHECK_RETVAL(jtag_execute_queue());
 
-			JTAG_DEBUG("DTR  _data %08x  ready %d  n_retry %d",
-				(unsigned) _data, ready, n_retry);
+			JTAG_DEBUG("DTR  _data %08" PRIx32 "  ready %d  n_retry %d",
+				_data, ready, n_retry);
 
 			int64_t then = 0;
 
@@ -889,9 +874,8 @@ int arm11_sc7_run(struct arm11_common *arm11, struct arm11_sc7_action *actions, 
 		/* Timeout here so we don't get stuck. */
 		int i_n = 0;
 		while (1) {
-			JTAG_DEBUG("SC7 <= c%-3d Data %08x %s",
-				(unsigned) address_out,
-				(unsigned) data_out,
+			JTAG_DEBUG("SC7 <= c%-3" PRIu8 " Data %08" PRIx32 " %s",
+				address_out, data_out,
 				n_rw ? "write" : "read");
 
 			arm11_add_dr_scan_vc(arm11->arm.target->tap, ARRAY_SIZE(chain7_fields),
@@ -919,7 +903,7 @@ int arm11_sc7_run(struct arm11_common *arm11, struct arm11_sc7_action *actions, 
 		}
 
 		if (!n_rw)
-			JTAG_DEBUG("SC7 => Data %08x", (unsigned) data_in);
+			JTAG_DEBUG("SC7 => Data %08" PRIx32, data_in);
 
 		if (i > 0) {
 			if (actions[i - 1].address != address_in)
@@ -1058,7 +1042,7 @@ static int arm11_dpm_instr_read_data_r0(struct arm_dpm *dpm,
  * and watchpoint operations instead of running them right away.  Since we
  * pre-allocated our vector, we don't need to worry about space.
  */
-static int arm11_bpwp_enable(struct arm_dpm *dpm, unsigned index_t,
+static int arm11_bpwp_enable(struct arm_dpm *dpm, unsigned int index_t,
 	uint32_t addr, uint32_t control)
 {
 	struct arm11_common *arm11 = dpm_to_arm11(dpm);
@@ -1095,7 +1079,7 @@ static int arm11_bpwp_enable(struct arm_dpm *dpm, unsigned index_t,
 	return ERROR_OK;
 }
 
-static int arm11_bpwp_disable(struct arm_dpm *dpm, unsigned index_t)
+static int arm11_bpwp_disable(struct arm_dpm *dpm, unsigned int index_t)
 {
 	struct arm11_common *arm11 = dpm_to_arm11(dpm);
 	struct arm11_sc7_action *action;

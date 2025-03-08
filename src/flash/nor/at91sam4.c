@@ -1,60 +1,19 @@
-/***************************************************************************
- *   Copyright (C) 2009 by Duane Ellis                                     *
- *   openocd@duaneellis.com                                                *
- *                                                                         *
- *   Copyright (C) 2010 by Olaf Lüke (at91sam3s* support)                  *
- *   olaf@uni-paderborn.de                                                 *
- *                                                                         *
- *   Copyright (C) 2011 by Olivier Schonken, Jim Norris                    *
- *   (at91sam3x* & at91sam4 support)*                                      *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
-****************************************************************************/
+// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-Source-Code)
 
-/* Some of the lower level code was based on code supplied by
- * ATMEL under this copyright. */
-
-/* BEGIN ATMEL COPYRIGHT */
-/* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
- * ----------------------------------------------------------------------------
- * Copyright (c) 2009, Atmel Corporation
+/*
+ * Copyright (C) 2009 by Duane Ellis <openocd@duaneellis.com>
  *
- * All rights reserved.
+ * at91sam3s* support
+ * Copyright (C) 2010 by Olaf Lüke <olaf@uni-paderborn.de>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * at91sam3x* & at91sam4 support
+ * Copyright (C) 2011 by Olivier Schonken, Jim Norris
  *
- * - Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the disclaimer below.
- *
- * Atmel's name may not be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
- * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ----------------------------------------------------------------------------
+ * Some of the lower level code was based on code supplied by
+ * ATMEL under BSD-Source-Code License and this copyright.
+ * ATMEL Microcontroller Software Support
+ * Copyright (c) 2009, Atmel Corporation. All rights reserved.
  */
-/* END ATMEL COPYRIGHT */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -102,8 +61,6 @@
 #define  OFFSET_EFC_FCR   4
 #define  OFFSET_EFC_FSR   8
 #define  OFFSET_EFC_FRR   12
-
-extern const struct flash_driver at91sam4_flash;
 
 static float _tomhz(uint32_t freq_hz)
 {
@@ -177,15 +134,15 @@ struct sam4_bank_private {
 	struct sam4_chip *chip;
 	/* so we can find the original bank pointer */
 	struct flash_bank *bank;
-	unsigned bank_number;
+	unsigned int bank_number;
 	uint32_t controller_address;
 	uint32_t base_address;
 	uint32_t flash_wait_states;
 	bool present;
-	unsigned size_bytes;
-	unsigned nsectors;
-	unsigned sector_size;
-	unsigned page_size;
+	unsigned int size_bytes;
+	unsigned int nsectors;
+	unsigned int sector_size;
+	unsigned int page_size;
 };
 
 struct sam4_chip_details {
@@ -199,12 +156,12 @@ struct sam4_chip_details {
 	uint32_t chipid_cidr;
 	const char *name;
 
-	unsigned n_gpnvms;
+	unsigned int n_gpnvms;
 #define SAM4_N_NVM_BITS 3
-	unsigned gpnvm[SAM4_N_NVM_BITS];
-	unsigned total_flash_size;
-	unsigned total_sram_size;
-	unsigned n_banks;
+	unsigned int gpnvm[SAM4_N_NVM_BITS];
+	unsigned int total_flash_size;
+	unsigned int total_sram_size;
+	unsigned int n_banks;
 #define SAM4_MAX_FLASH_BANKS 2
 	/* these are "initialized" from the global const data */
 	struct sam4_bank_private bank[SAM4_MAX_FLASH_BANKS];
@@ -1522,7 +1479,7 @@ static int efc_get_result(struct sam4_bank_private *private, uint32_t *v)
 }
 
 static int efc_start_command(struct sam4_bank_private *private,
-	unsigned command, unsigned argument)
+	unsigned int command, unsigned int argument)
 {
 	uint32_t n, v;
 	int r;
@@ -1544,7 +1501,7 @@ do_retry:
 		case AT91C_EFC_FCMD_CLB:
 			n = (private->size_bytes / private->page_size);
 			if (argument >= n)
-				LOG_ERROR("*BUG*: Embedded flash has only %u pages", (unsigned)(n));
+				LOG_ERROR("*BUG*: Embedded flash has only %" PRIu32 " pages", n);
 			break;
 
 		case AT91C_EFC_FCMD_SFB:
@@ -1617,8 +1574,8 @@ do_retry:
  * @param status   - put command status bits here
  */
 static int efc_perform_command(struct sam4_bank_private *private,
-	unsigned command,
-	unsigned argument,
+	unsigned int command,
+	unsigned int argument,
 	uint32_t *status)
 {
 
@@ -1759,7 +1716,7 @@ static int flashd_erase_pages(struct sam4_bank_private *private,
  * @param puthere  - result stored here.
  */
 /* ------------------------------------------------------------------------------ */
-static int flashd_get_gpnvm(struct sam4_bank_private *private, unsigned gpnvm, unsigned *puthere)
+static int flashd_get_gpnvm(struct sam4_bank_private *private, unsigned int gpnvm, unsigned int *puthere)
 {
 	uint32_t v;
 	int r;
@@ -1800,10 +1757,10 @@ static int flashd_get_gpnvm(struct sam4_bank_private *private, unsigned gpnvm, u
  * @param gpnvm GPNVM index.
  * @returns 0 if successful; otherwise returns an error code.
  */
-static int flashd_clr_gpnvm(struct sam4_bank_private *private, unsigned gpnvm)
+static int flashd_clr_gpnvm(struct sam4_bank_private *private, unsigned int gpnvm)
 {
 	int r;
-	unsigned v;
+	unsigned int v;
 
 	LOG_DEBUG("Here");
 	if (private->bank_number != 0) {
@@ -1832,10 +1789,10 @@ static int flashd_clr_gpnvm(struct sam4_bank_private *private, unsigned gpnvm)
  * @param private info about the bank
  * @param gpnvm GPNVM index.
  */
-static int flashd_set_gpnvm(struct sam4_bank_private *private, unsigned gpnvm)
+static int flashd_set_gpnvm(struct sam4_bank_private *private, unsigned int gpnvm)
 {
 	int r;
-	unsigned v;
+	unsigned int v;
 
 	if (private->bank_number != 0) {
 		LOG_ERROR("GPNVM only works with Bank0");
@@ -1889,8 +1846,8 @@ static int flashd_get_lock_bits(struct sam4_bank_private *private, uint32_t *v)
  */
 
 static int flashd_unlock(struct sam4_bank_private *private,
-	unsigned start_sector,
-	unsigned end_sector)
+	unsigned int start_sector,
+	unsigned int end_sector)
 {
 	int r;
 	uint32_t status;
@@ -1919,8 +1876,8 @@ static int flashd_unlock(struct sam4_bank_private *private,
  * @param end_sector   - last sector (inclusive) to lock
  */
 static int flashd_lock(struct sam4_bank_private *private,
-	unsigned start_sector,
-	unsigned end_sector)
+	unsigned int start_sector,
+	unsigned int end_sector)
 {
 	uint32_t status;
 	uint32_t pg;
@@ -1948,8 +1905,8 @@ static int flashd_lock(struct sam4_bank_private *private,
 static uint32_t sam4_reg_fieldname(struct sam4_chip *chip,
 	const char *regname,
 	uint32_t value,
-	unsigned shift,
-	unsigned width)
+	unsigned int shift,
+	unsigned int width)
 {
 	uint32_t v;
 	int hwidth, dwidth;
@@ -2034,7 +1991,7 @@ static const char *const sramsize[] = {
 
 };
 
-static const struct archnames { unsigned value; const char *name; } archnames[] = {
+static const struct archnames { unsigned int value; const char *name; } archnames[] = {
 	{ 0x19,  "AT91SAM9xx Series"                                            },
 	{ 0x29,  "AT91SAM9XExx Series"                                          },
 	{ 0x34,  "AT91x34 Series"                                                       },
@@ -2417,8 +2374,8 @@ static int sam4_read_this_reg(struct sam4_chip *chip, uint32_t *goes_here)
 
 	r = target_read_u32(chip->target, reg->address, goes_here);
 	if (r != ERROR_OK) {
-		LOG_ERROR("Cannot read SAM4 register: %s @ 0x%08x, Err: %d",
-			reg->name, (unsigned)(reg->address), r);
+		LOG_ERROR("Cannot read SAM4 register: %s @ 0x%08" PRIx32 ", Err: %d",
+			reg->name, reg->address, r);
 	}
 	return r;
 }
@@ -2433,8 +2390,8 @@ static int sam4_read_all_regs(struct sam4_chip *chip)
 		r = sam4_read_this_reg(chip,
 				sam4_get_reg_ptr(&(chip->cfg), reg));
 		if (r != ERROR_OK) {
-			LOG_ERROR("Cannot read SAM4 register: %s @ 0x%08x, Error: %d",
-				reg->name, ((unsigned)(reg->address)), r);
+			LOG_ERROR("Cannot read SAM4 register: %s @ 0x%08" PRIx32 ", Error: %d",
+				reg->name, reg->address, r);
 			return r;
 		}
 		reg++;
@@ -2487,7 +2444,7 @@ static int sam4_protect_check(struct flash_bank *bank)
 {
 	int r;
 	uint32_t v[4] = {0};
-	unsigned x;
+	unsigned int x;
 	struct sam4_bank_private *private;
 
 	LOG_DEBUG("Begin");
@@ -2600,7 +2557,7 @@ static int sam4_get_details(struct sam4_bank_private *private)
 	const struct sam4_chip_details *details;
 	struct sam4_chip *chip;
 	struct flash_bank *saved_banks[SAM4_MAX_FLASH_BANKS];
-	unsigned x;
+	unsigned int x;
 
 	LOG_DEBUG("Begin");
 	details = all_sam4_details;
@@ -2839,7 +2796,7 @@ static int sam4_protect(struct flash_bank *bank, int set, unsigned int first,
 
 }
 
-static int sam4_page_read(struct sam4_bank_private *private, unsigned pagenum, uint8_t *buf)
+static int sam4_page_read(struct sam4_bank_private *private, unsigned int pagenum, uint8_t *buf)
 {
 	uint32_t adr;
 	int r;
@@ -2884,7 +2841,7 @@ static int sam4_set_wait(struct sam4_bank_private *private)
 	return r;
 }
 
-static int sam4_page_write(struct sam4_bank_private *private, unsigned pagenum, const uint8_t *buf)
+static int sam4_page_write(struct sam4_bank_private *private, unsigned int pagenum, const uint8_t *buf)
 {
 	uint32_t adr;
 	uint32_t status;
@@ -2934,10 +2891,10 @@ static int sam4_write(struct flash_bank *bank,
 	uint32_t count)
 {
 	int n;
-	unsigned page_cur;
-	unsigned page_end;
+	unsigned int page_cur;
+	unsigned int page_end;
 	int r;
-	unsigned page_offset;
+	unsigned int page_offset;
 	struct sam4_bank_private *private;
 	uint8_t *pagebuffer;
 
@@ -3088,7 +3045,7 @@ COMMAND_HANDLER(sam4_handle_info_command)
 	if (!chip)
 		return ERROR_OK;
 
-	unsigned x;
+	unsigned int x;
 	int r;
 
 	/* bank0 must exist before we can do anything */
@@ -3140,7 +3097,7 @@ need_define:
 
 COMMAND_HANDLER(sam4_handle_gpnvm_command)
 {
-	unsigned x, v;
+	unsigned int x, v;
 	int r, who;
 	struct sam4_chip *chip;
 

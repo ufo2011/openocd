@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2015 by Ivan Buliev                                     *
  *   i.buliev@mikrosistemi.com                                             *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /***************************************************************************
@@ -90,7 +79,7 @@ static int aducm360_build_sector_list(struct flash_bank *bank)
 	/* sector size is 512 */
 	bank->num_sectors = bank->size / FLASH_SECTOR_SIZE;
 	bank->sectors = malloc(sizeof(struct flash_sector) * bank->num_sectors);
-	for (unsigned i = 0; i < bank->num_sectors; ++i) {
+	for (unsigned int i = 0; i < bank->num_sectors; ++i) {
 		bank->sectors[i].offset = offset;
 		bank->sectors[i].size = FLASH_SECTOR_SIZE;
 		offset += bank->sectors[i].size;

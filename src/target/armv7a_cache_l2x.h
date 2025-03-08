@@ -1,19 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /***************************************************************************
  *   Copyright (C) 2015 Oleksij Rempel                                     *
  *   linux@rempel-privat.de                                                *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifndef OPENOCD_TARGET_ARM7A_CACHE_L2X_H
@@ -133,16 +122,16 @@ struct outer_cache_fns {
 	void (*resume)(void);
 
 	/* This is an ARM L2C thing */
-	void (*write_sec)(unsigned long, unsigned);
+	void (*write_sec)(unsigned long, unsigned int);
 	void (*configure)(const struct l2x0_regs *);
 };
 
 struct l2c_init_data {
 	const char *type;
-	unsigned way_size_0;
-	unsigned num_lock;
+	unsigned int way_size_0;
+	unsigned int num_lock;
 
-	void (*enable)(uint32_t, uint32_t, unsigned);
+	void (*enable)(uint32_t, uint32_t, unsigned int);
 	void (*fixup)(uint32_t, uint32_t, struct outer_cache_fns *);
 	void (*save)(uint32_t);
 	void (*configure)(uint32_t);

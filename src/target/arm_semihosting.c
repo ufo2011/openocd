@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2009 by Marvell Technology Group Ltd.                   *
  *   Written by Nicolas Pitre <nico@marvell.com>                           *
@@ -10,19 +12,6 @@
  *                                                                         *
  *   Copyright (C) 2018 by Liviu Ionescu                                   *
  *   <ilg@livius.net>                                                      *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /**
@@ -61,7 +50,7 @@ static int arm_semihosting_resume(struct target *target, int *retval)
 	if (is_armv8(target_to_armv8(target))) {
 		struct armv8_common *armv8 = target_to_armv8(target);
 		if (armv8->last_run_control_op == ARMV8_RUNCONTROL_RESUME) {
-			*retval = target_resume(target, 1, 0, 0, 0);
+			*retval = target_resume(target, true, 0, false, false);
 			if (*retval != ERROR_OK) {
 				LOG_ERROR("Failed to resume target");
 				return 0;
@@ -69,7 +58,7 @@ static int arm_semihosting_resume(struct target *target, int *retval)
 		} else if (armv8->last_run_control_op == ARMV8_RUNCONTROL_STEP)
 			target->debug_reason = DBG_REASON_SINGLESTEP;
 	} else {
-		*retval = target_resume(target, 1, 0, 0, 0);
+		*retval = target_resume(target, true, 0, false, false);
 		if (*retval != ERROR_OK) {
 			LOG_ERROR("Failed to resume target");
 			return 0;

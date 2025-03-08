@@ -1,18 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /*
  * Copyright (C) 2016-2020 by Marc Schink <dev@zapb.de>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -151,8 +140,8 @@ int rtt_start(void)
 				addr);
 			rtt.ctrl.address = addr;
 		} else {
-			LOG_INFO("rtt: No control block found");
-			return ERROR_OK;
+			LOG_ERROR("rtt: No control block found");
+			return ERROR_FAIL;
 		}
 	}
 
@@ -306,11 +295,6 @@ int rtt_write_channel(unsigned int channel_index, const uint8_t *buffer,
 
 	return rtt.source.write(rtt.target, &rtt.ctrl, channel_index, buffer,
 		length, NULL);
-}
-
-bool rtt_started(void)
-{
-	return rtt.started;
 }
 
 bool rtt_configured(void)
