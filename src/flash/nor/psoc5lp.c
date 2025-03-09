@@ -1,20 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /*
  * PSoC 5LP flash driver
  *
  * Copyright (c) 2016 Andreas Färber
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -113,10 +102,10 @@
 
 struct psoc5lp_device {
 	uint32_t id;
-	unsigned fam;
-	unsigned speed_mhz;
-	unsigned flash_kb;
-	unsigned eeprom_kb;
+	unsigned int fam;
+	unsigned int speed_mhz;
+	unsigned int flash_kb;
+	unsigned int eeprom_kb;
 };
 
 /*
@@ -256,7 +245,7 @@ static int psoc5lp_find_device(struct target *target,
 	const struct psoc5lp_device **device)
 {
 	uint32_t device_id;
-	unsigned i;
+	unsigned int i;
 	int retval;
 
 	*device = NULL;
@@ -392,9 +381,9 @@ static int psoc5lp_spc_load_byte(struct target *target,
 }
 
 static int psoc5lp_spc_load_row(struct target *target,
-	uint8_t array_id, const uint8_t *data, unsigned row_size)
+	uint8_t array_id, const uint8_t *data, unsigned int row_size)
 {
-	unsigned i;
+	unsigned int i;
 	int retval;
 
 	retval = psoc5lp_spc_write_opcode(target, SPC_LOAD_ROW);
@@ -822,24 +811,8 @@ FLASH_BANK_COMMAND_HANDLER(psoc5lp_nvl_flash_bank_command)
 	return ERROR_OK;
 }
 
-static const struct command_registration psoc5lp_nvl_exec_command_handlers[] = {
-	COMMAND_REGISTRATION_DONE
-};
-
-static const struct command_registration psoc5lp_nvl_command_handlers[] = {
-	{
-		.name = "psoc5lp_nvl",
-		.mode = COMMAND_ANY,
-		.help = "PSoC 5LP NV Latch command group",
-		.usage = "",
-		.chain = psoc5lp_nvl_exec_command_handlers,
-	},
-	COMMAND_REGISTRATION_DONE
-};
-
 const struct flash_driver psoc5lp_nvl_flash = {
 	.name = "psoc5lp_nvl",
-	.commands = psoc5lp_nvl_command_handlers,
 	.flash_bank_command = psoc5lp_nvl_flash_bank_command,
 	.info = psoc5lp_nvl_get_info_command,
 	.probe = psoc5lp_nvl_probe,
@@ -880,7 +853,7 @@ static int psoc5lp_eeprom_write(struct flash_bank *bank,
 {
 	struct target *target = bank->target;
 	uint8_t temp[2];
-	unsigned row;
+	unsigned int row;
 	int retval;
 
 	if (offset % EEPROM_ROW_SIZE != 0) {
@@ -1021,24 +994,8 @@ FLASH_BANK_COMMAND_HANDLER(psoc5lp_eeprom_flash_bank_command)
 	return ERROR_OK;
 }
 
-static const struct command_registration psoc5lp_eeprom_exec_command_handlers[] = {
-	COMMAND_REGISTRATION_DONE
-};
-
-static const struct command_registration psoc5lp_eeprom_command_handlers[] = {
-	{
-		.name = "psoc5lp_eeprom",
-		.mode = COMMAND_ANY,
-		.help = "PSoC 5LP EEPROM command group",
-		.usage = "",
-		.chain = psoc5lp_eeprom_exec_command_handlers,
-	},
-	COMMAND_REGISTRATION_DONE
-};
-
 const struct flash_driver psoc5lp_eeprom_flash = {
 	.name = "psoc5lp_eeprom",
-	.commands = psoc5lp_eeprom_command_handlers,
 	.flash_bank_command = psoc5lp_eeprom_flash_bank_command,
 	.info = psoc5lp_eeprom_get_info_command,
 	.probe = psoc5lp_eeprom_probe,
@@ -1167,7 +1124,7 @@ static int psoc5lp_write(struct flash_bank *bank, const uint8_t *buffer,
 	struct working_area *code_area, *even_row_area, *odd_row_area;
 	uint32_t row_size;
 	uint8_t temp[2], buf[12], ecc_bytes[ROW_ECC_SIZE];
-	unsigned array_id, row;
+	unsigned int array_id, row;
 	int i, retval;
 
 	if (offset + byte_count > bank->size) {
@@ -1226,7 +1183,7 @@ static int psoc5lp_write(struct flash_bank *bank, const uint8_t *buffer,
 		     row < ROWS_PER_BLOCK && byte_count > 0; row++) {
 			bool even_row = (row % 2 == 0);
 			struct working_area *data_area = even_row ? even_row_area : odd_row_area;
-			unsigned len = MIN(ROW_SIZE, byte_count);
+			unsigned int len = MIN(ROW_SIZE, byte_count);
 
 			LOG_DEBUG("Writing load command for array %u row %u at " TARGET_ADDR_FMT,
 				array_id, row, data_area->address);
@@ -1350,8 +1307,8 @@ static int psoc5lp_protect_check(struct flash_bank *bank)
 {
 	struct psoc5lp_flash_bank *psoc_bank = bank->driver_priv;
 	uint8_t row_data[ROW_SIZE];
-	const unsigned protection_bytes_per_sector = ROWS_PER_SECTOR * 2 / 8;
-	unsigned i, k, num_sectors;
+	const unsigned int protection_bytes_per_sector = ROWS_PER_SECTOR * 2 / 8;
+	unsigned int i, k, num_sectors;
 	int retval;
 
 	if (bank->target->state != TARGET_HALTED) {

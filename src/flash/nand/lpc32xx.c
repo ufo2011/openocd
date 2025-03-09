@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2007 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
@@ -9,19 +11,6 @@
  *   Based on a combination of the lpc3180 driver and code from            *
  *   uboot-2009.03-lpc32xx by Kevin Wells.                                 *
  *   Any bugs are mine. --BSt                                              *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -35,8 +24,6 @@
 static int lpc32xx_reset(struct nand_device *nand);
 static int lpc32xx_controller_ready(struct nand_device *nand, int timeout);
 static int lpc32xx_tc_ready(struct nand_device *nand, int timeout);
-extern int nand_correct_data(struct nand_device *nand, u_char *dat,
-		u_char *read_ecc, u_char *calc_ecc);
 
 /* These are offset with the working area in IRAM when using DMA to
  * read/write data to the SLC controller.
@@ -1040,7 +1027,7 @@ static int lpc32xx_write_page_slc(struct nand_device *nand,
 
 	LOG_DEBUG("SLC write page %" PRIx32 " data=%d, oob=%d, "
 		"data_size=%" PRIu32 ", oob_size=%" PRIu32,
-		page, data != 0, oob != 0, data_size, oob_size);
+		page, !!data, !!oob, data_size, oob_size);
 
 	target_mem_base = pworking_area->address;
 	/*
@@ -1399,8 +1386,7 @@ static int lpc32xx_read_page_mlc(struct nand_device *nand, uint32_t page,
 
 		if (mlc_isr & 0x8) {
 			if (mlc_isr & 0x40) {
-				LOG_ERROR("uncorrectable error detected: "
-					"0x%2.2x", (unsigned)mlc_isr);
+				LOG_ERROR("uncorrectable error detected: 0x%2.2" PRIx32, mlc_isr);
 				return ERROR_NAND_OPERATION_FAILED;
 			}
 
@@ -1756,7 +1742,7 @@ COMMAND_HANDLER(handle_lpc32xx_select_command)
 	if ((CMD_ARGC < 1) || (CMD_ARGC > 3))
 		return ERROR_COMMAND_SYNTAX_ERROR;
 
-	unsigned num;
+	unsigned int num;
 	COMMAND_PARSE_NUMBER(uint, CMD_ARGV[0], num);
 	struct nand_device *nand = get_nand_device_by_num(num);
 	if (!nand) {

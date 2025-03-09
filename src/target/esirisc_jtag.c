@@ -1,20 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2018 by Square, Inc.                                    *
  *   Steven Stallion <stallion@squareup.com>                               *
  *   James Zhao <hjz@squareup.com>                                         *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -29,6 +18,8 @@
 #include <jtag/interface.h>
 
 #include "esirisc_jtag.h"
+
+static uint8_t esirisc_jtag_get_eid(struct esirisc_jtag *jtag_info);
 
 static void esirisc_jtag_set_instr(struct esirisc_jtag *jtag_info, uint32_t new_instr)
 {
@@ -69,11 +60,12 @@ static int esirisc_jtag_get_padding(void)
 	return padding;
 }
 
-static int esirisc_jtag_count_bits(int num_fields, struct scan_field *fields)
+static int esirisc_jtag_count_bits(unsigned int num_fields,
+		struct scan_field *fields)
 {
 	int bit_count = 0;
 
-	for (int i = 0; i < num_fields; ++i)
+	for (unsigned int i = 0; i < num_fields; ++i)
 		bit_count += fields[i].num_bits;
 
 	return bit_count;
@@ -141,7 +133,9 @@ static int esirisc_jtag_recv(struct esirisc_jtag *jtag_info,
 	int num_in_bytes = DIV_ROUND_UP(num_in_bits, 8);
 
 	struct scan_field fields[3];
-	uint8_t r[num_in_bytes * 2];
+	/* prevent zero-size variable length array */
+	int r_size = num_in_bytes ? num_in_bytes * 2 : 1;
+	uint8_t r[r_size];
 
 	esirisc_jtag_set_instr(jtag_info, INSTR_DEBUG);
 
@@ -229,7 +223,7 @@ bool esirisc_jtag_is_stopped(struct esirisc_jtag *jtag_info)
 	return !!(jtag_info->status & 1<<6);	/* S */
 }
 
-uint8_t esirisc_jtag_get_eid(struct esirisc_jtag *jtag_info)
+static uint8_t esirisc_jtag_get_eid(struct esirisc_jtag *jtag_info)
 {
 	return jtag_info->status & 0x3f;		/* EID */
 }
@@ -498,7 +492,7 @@ int esirisc_jtag_enable_debug(struct esirisc_jtag *jtag_info)
 	return esirisc_jtag_send_ctrl(jtag_info, DEBUG_ENABLE_DEBUG);
 }
 
-int esirisc_jtag_disable_debug(struct esirisc_jtag *jtag_info)
+static __attribute__((unused)) int esirisc_jtag_disable_debug(struct esirisc_jtag *jtag_info)
 {
 	return esirisc_jtag_send_ctrl(jtag_info, DEBUG_DISABLE_DEBUG);
 }

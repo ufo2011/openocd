@@ -1,16 +1,8 @@
-/*****************************************************************************
- *   Copyright (C) 2016 by Matthias Welwarsky <matthias.welwarsky@sysgo.com> *
- *                                                                           *
- *   This program is free software; you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation; either version 2 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- *   GNU General Public License for more details.                            *
- ****************************************************************************/
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+/*
+ * Copyright (C) 2016 by Matthias Welwarsky <matthias.welwarsky@sysgo.com>
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -29,7 +21,7 @@ struct mem_ap {
 	int common_magic;
 	struct adiv5_dap *dap;
 	struct adiv5_ap *ap;
-	int ap_num;
+	uint64_t ap_num;
 };
 
 static int mem_ap_target_create(struct target *target, Jim_Interp *interp)
@@ -42,13 +34,13 @@ static int mem_ap_target_create(struct target *target, Jim_Interp *interp)
 		return ERROR_FAIL;
 
 	if (pc->ap_num == DP_APSEL_INVALID) {
-		LOG_ERROR("AP number not specified");
+		LOG_TARGET_ERROR(target, "AP number not specified");
 		return ERROR_FAIL;
 	}
 
 	mem_ap = calloc(1, sizeof(struct mem_ap));
 	if (!mem_ap) {
-		LOG_ERROR("Out of memory");
+		LOG_TARGET_ERROR(target, "Out of memory");
 		return ERROR_FAIL;
 	}
 
@@ -66,7 +58,7 @@ static int mem_ap_target_create(struct target *target, Jim_Interp *interp)
 
 static int mem_ap_init_target(struct command_context *cmd_ctx, struct target *target)
 {
-	LOG_DEBUG("%s", __func__);
+	LOG_TARGET_DEBUG(target, "%s", __func__);
 	target->state = TARGET_UNKNOWN;
 	target->debug_reason = DBG_REASON_UNDEFINED;
 	return ERROR_OK;
@@ -74,16 +66,20 @@ static int mem_ap_init_target(struct command_context *cmd_ctx, struct target *ta
 
 static void mem_ap_deinit_target(struct target *target)
 {
-	LOG_DEBUG("%s", __func__);
+	struct mem_ap *mem_ap = target->arch_info;
+
+	LOG_TARGET_DEBUG(target, "%s", __func__);
+
+	if (mem_ap->ap)
+		dap_put_ap(mem_ap->ap);
 
 	free(target->private_config);
 	free(target->arch_info);
-	return;
 }
 
 static int mem_ap_arch_state(struct target *target)
 {
-	LOG_DEBUG("%s", __func__);
+	LOG_TARGET_DEBUG(target, "%s", __func__);
 	return ERROR_OK;
 }
 
@@ -99,26 +95,27 @@ static int mem_ap_poll(struct target *target)
 
 static int mem_ap_halt(struct target *target)
 {
-	LOG_DEBUG("%s", __func__);
+	LOG_TARGET_DEBUG(target, "%s", __func__);
 	target->state = TARGET_HALTED;
 	target->debug_reason = DBG_REASON_DBGRQ;
 	target_call_event_callbacks(target, TARGET_EVENT_HALTED);
 	return ERROR_OK;
 }
 
-static int mem_ap_resume(struct target *target, int current, target_addr_t address,
-		int handle_breakpoints, int debug_execution)
+static int mem_ap_resume(struct target *target, bool current,
+		target_addr_t address, bool handle_breakpoints,
+		bool debug_execution)
 {
-	LOG_DEBUG("%s", __func__);
+	LOG_TARGET_DEBUG(target, "%s", __func__);
 	target->state = TARGET_RUNNING;
 	target->debug_reason = DBG_REASON_NOTHALTED;
 	return ERROR_OK;
 }
 
-static int mem_ap_step(struct target *target, int current, target_addr_t address,
-				int handle_breakpoints)
+static int mem_ap_step(struct target *target, bool current,
+		target_addr_t address, bool handle_breakpoints)
 {
-	LOG_DEBUG("%s", __func__);
+	LOG_TARGET_DEBUG(target, "%s", __func__);
 	target->state = TARGET_HALTED;
 	target->debug_reason = DBG_REASON_DBGRQ;
 	target_call_event_callbacks(target, TARGET_EVENT_HALTED);
@@ -130,7 +127,7 @@ static int mem_ap_assert_reset(struct target *target)
 	target->state = TARGET_RESET;
 	target->debug_reason = DBG_REASON_UNDEFINED;
 
-	LOG_DEBUG("%s", __func__);
+	LOG_TARGET_DEBUG(target, "%s", __func__);
 	return ERROR_OK;
 }
 
@@ -139,7 +136,13 @@ static int mem_ap_examine(struct target *target)
 	struct mem_ap *mem_ap = target->arch_info;
 
 	if (!target_was_examined(target)) {
-		mem_ap->ap = dap_ap(mem_ap->dap, mem_ap->ap_num);
+		if (!mem_ap->ap) {
+			mem_ap->ap = dap_get_ap(mem_ap->dap, mem_ap->ap_num);
+			if (!mem_ap->ap) {
+				LOG_TARGET_ERROR(target, "Cannot get AP");
+				return ERROR_FAIL;
+			}
+		}
 		target_set_examined(target);
 		target->state = TARGET_UNKNOWN;
 		target->debug_reason = DBG_REASON_UNDEFINED;
@@ -160,7 +163,7 @@ static int mem_ap_deassert_reset(struct target *target)
 		target->debug_reason = DBG_REASON_NOTHALTED;
 	}
 
-	LOG_DEBUG("%s", __func__);
+	LOG_TARGET_DEBUG(target, "%s", __func__);
 	return ERROR_OK;
 }
 
@@ -179,7 +182,7 @@ static struct reg_arch_type mem_ap_reg_arch_type = {
 	.set = mem_ap_reg_set,
 };
 
-const char *mem_ap_get_gdb_arch(struct target *target)
+static const char *mem_ap_get_gdb_arch(const struct target *target)
 {
 	return "arm";
 }
@@ -191,11 +194,11 @@ const char *mem_ap_get_gdb_arch(struct target *target)
  * reg[24]:     32 bits, fps
  * reg[25]:     32 bits, cpsr
  *
- * Set 'exist' only to reg[0..15], so initial response to GDB is correct
+ * GDB requires only reg[0..15]
  */
 #define NUM_REGS     26
+#define NUM_GDB_REGS 16
 #define MAX_REG_SIZE 96
-#define REG_EXIST(n) ((n) < 16)
 #define REG_SIZE(n)  ((((n) >= 16) && ((n) < 24)) ? 96 : 32)
 
 struct mem_ap_alloc_reg_list {
@@ -210,19 +213,19 @@ static int mem_ap_get_gdb_reg_list(struct target *target, struct reg **reg_list[
 {
 	struct mem_ap_alloc_reg_list *mem_ap_alloc = calloc(1, sizeof(struct mem_ap_alloc_reg_list));
 	if (!mem_ap_alloc) {
-		LOG_ERROR("Out of memory");
+		LOG_TARGET_ERROR(target, "Out of memory");
 		return ERROR_FAIL;
 	}
 
 	*reg_list = mem_ap_alloc->reg_list;
-	*reg_list_size = NUM_REGS;
+	*reg_list_size = (reg_class == REG_CLASS_ALL) ? NUM_REGS : NUM_GDB_REGS;
 	struct reg *regs = mem_ap_alloc->regs;
 
 	for (int i = 0; i < NUM_REGS; i++) {
 		regs[i].number = i;
 		regs[i].value = mem_ap_alloc->regs_value;
 		regs[i].size = REG_SIZE(i);
-		regs[i].exist = REG_EXIST(i);
+		regs[i].exist = true;
 		regs[i].type = &mem_ap_reg_arch_type;
 		(*reg_list)[i] = &regs[i];
 	}
@@ -235,7 +238,7 @@ static int mem_ap_read_memory(struct target *target, target_addr_t address,
 {
 	struct mem_ap *mem_ap = target->arch_info;
 
-	LOG_DEBUG("Reading memory at physical address " TARGET_ADDR_FMT
+	LOG_TARGET_DEBUG(target, "Reading memory at physical address " TARGET_ADDR_FMT
 		  "; size %" PRIu32 "; count %" PRIu32, address, size, count);
 
 	if (count == 0 || !buffer)
@@ -250,7 +253,7 @@ static int mem_ap_write_memory(struct target *target, target_addr_t address,
 {
 	struct mem_ap *mem_ap = target->arch_info;
 
-	LOG_DEBUG("Writing memory at physical address " TARGET_ADDR_FMT
+	LOG_TARGET_DEBUG(target, "Writing memory at physical address " TARGET_ADDR_FMT
 		  "; size %" PRIu32 "; count %" PRIu32, address, size, count);
 
 	if (count == 0 || !buffer)

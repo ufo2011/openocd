@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 # MEMORY
 #
 # All Memory regions have two components.
@@ -64,10 +66,10 @@ proc iswithin { ADDRESS BASE LEN } {
 proc address_info { ADDRESS } {
 
     foreach WHERE { FLASH RAM MMREGS XMEM UNKNOWN } {
-	if { info exists $WHERE } {
+	if { [info exists $WHERE] } {
 	    set lmt [set N_[set WHERE]]
 	    for { set region 0 } { $region < $lmt } { incr region } {
-		if { iswithin $ADDRESS $WHERE($region,BASE) $WHERE($region,LEN) } {
+		if { [iswithin $ADDRESS $WHERE($region,BASE) $WHERE($region,LEN)] } {
 		    return  "$WHERE $region";
 		}
 	    }

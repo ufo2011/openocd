@@ -1,18 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /***************************************************************************
  *   Copyright (C) 2009-2010 by David Brownell                             *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifndef OPENOCD_JTAG_SWD_H
@@ -112,7 +101,7 @@ static const uint8_t swd_seq_line_reset[] = {
 	/* At least 2 idle (low) cycles */
 	0x00,
 };
-static const unsigned swd_seq_line_reset_len = 64;
+static const unsigned int swd_seq_line_reset_len = 64;
 
 /**
  * JTAG-to-SWD sequence.
@@ -133,7 +122,7 @@ static const uint8_t swd_seq_jtag_to_swd[] = {
 	/* At least 2 idle (low) cycles */
 	0x00,
 };
-static const unsigned swd_seq_jtag_to_swd_len = 136;
+static const unsigned int swd_seq_jtag_to_swd_len = 136;
 
 /**
  * SWD-to-JTAG sequence.
@@ -152,7 +141,7 @@ static const uint8_t swd_seq_swd_to_jtag[] = {
 	/* At least 5 TCK/SWCLK cycles with TMS/SWDIO high */
 	0xff,
 };
-static const unsigned swd_seq_swd_to_jtag_len = 80;
+static const unsigned int swd_seq_swd_to_jtag_len = 80;
 
 /**
  * SWD-to-dormant sequence.
@@ -167,7 +156,7 @@ static const uint8_t swd_seq_swd_to_dormant[] = {
 	 /* Switching sequence from SWD to dormant */
 	0xbc, 0xe3,
 };
-static const unsigned swd_seq_swd_to_dormant_len = 72;
+static const unsigned int swd_seq_swd_to_dormant_len = 72;
 
 /**
  * Dormant-to-SWD sequence.
@@ -198,7 +187,7 @@ static const uint8_t swd_seq_dormant_to_swd[] = {
 	/* At least 2 idle (low) cycles */
 	0x00,
 };
-static const unsigned swd_seq_dormant_to_swd_len = 224;
+static const unsigned int swd_seq_dormant_to_swd_len = 224;
 
 /**
  * JTAG-to-dormant sequence.
@@ -219,7 +208,7 @@ static const uint8_t swd_seq_jtag_to_dormant[] = {
 	0x77, /* ((0xbb >> 7) & GENMASK(0, 0)) | ((0xbb << 1) & GENMASK(7, 1)) */
 	0x67, /* ((0xbb >> 7) & GENMASK(0, 0)) | ((0x33 << 1) & GENMASK(7, 1)) */
 };
-static const unsigned swd_seq_jtag_to_dormant_len = 40;
+static const unsigned int swd_seq_jtag_to_dormant_len = 40;
 
 /**
  * Dormant-to-JTAG sequence.
@@ -252,7 +241,7 @@ static const uint8_t swd_seq_dormant_to_jtag[] = {
 	/* put the TAP in Run/Test Idle */
 	0x00,
 };
-static const unsigned swd_seq_dormant_to_jtag_len = 160;
+static const unsigned int swd_seq_dormant_to_jtag_len = 160;
 
 struct swd_driver {
 	/**
