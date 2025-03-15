@@ -1,20 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /*
 *   OpenOCD STM8 target driver
 *   Copyright (C) 2017  Ake Rehnman
 *   ake.rehnman(at)gmail.com
-*
-*   This program is free software: you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation, either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   This program is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef HAVE_CONFIG_H
@@ -49,7 +38,7 @@ static int (*adapter_speed)(int speed);
 extern struct adapter_driver *adapter_driver;
 
 static const struct {
-	unsigned id;
+	unsigned int id;
 	const char *name;
 	const uint8_t bits;
 	enum reg_type type;
@@ -553,12 +542,12 @@ static int stm8_get_core_reg(struct reg *reg)
 	int retval;
 	struct stm8_core_reg *stm8_reg = reg->arch_info;
 	struct target *target = stm8_reg->target;
-	struct stm8_common *stm8_target = target_to_stm8(target);
+	struct stm8_common *stm8 = target_to_stm8(target);
 
 	if (target->state != TARGET_HALTED)
 		return ERROR_TARGET_NOT_HALTED;
 
-	retval = stm8_target->read_core_reg(target, stm8_reg->num);
+	retval = stm8->read_core_reg(target, stm8_reg->num);
 
 	return retval;
 }
@@ -700,15 +689,13 @@ static int stm8_write_flash(struct target *target, enum mem_type type,
 			if (stm8->flash_ncr2)
 				stm8_write_u8(target, stm8->flash_ncr2, ~(PRG + opt));
 			blocksize = blocksize_param;
-		} else
-		if ((bytecnt >= 4) && ((address & 0x3) == 0)) {
+		} else if ((bytecnt >= 4) && ((address & 0x3) == 0)) {
 			if (stm8->flash_cr2)
 				stm8_write_u8(target, stm8->flash_cr2, WPRG + opt);
 			if (stm8->flash_ncr2)
 				stm8_write_u8(target, stm8->flash_ncr2, ~(WPRG + opt));
 			blocksize = 4;
-		} else
-		if (blocksize != 1) {
+		} else if (blocksize != 1) {
 			if (stm8->flash_cr2)
 				stm8_write_u8(target, stm8->flash_cr2, opt);
 			if (stm8->flash_ncr2)
@@ -993,9 +980,9 @@ static int stm8_single_step_core(struct target *target)
 	return ERROR_OK;
 }
 
-static int stm8_resume(struct target *target, int current,
-		target_addr_t address, int handle_breakpoints,
-		int debug_execution)
+static int stm8_resume(struct target *target, bool current,
+		target_addr_t address, bool handle_breakpoints,
+		bool debug_execution)
 {
 	struct stm8_common *stm8 = target_to_stm8(target);
 	struct breakpoint *breakpoint = NULL;
@@ -1005,7 +992,7 @@ static int stm8_resume(struct target *target, int current,
 			handle_breakpoints, debug_execution);
 
 	if (target->state != TARGET_HALTED) {
-		LOG_WARNING("target not halted");
+		LOG_TARGET_ERROR(target, "not halted");
 		return ERROR_TARGET_NOT_HALTED;
 	}
 
@@ -1017,7 +1004,7 @@ static int stm8_resume(struct target *target, int current,
 		stm8_set_hwbreak(target, comparator_list);
 	}
 
-	/* current = 1: continue on current pc,
+	/* current = true: continue on current pc,
 	   otherwise continue at <address> */
 	if (!current) {
 		buf_set_u32(stm8->core_cache->reg_list[STM8_PC].value,
@@ -1169,7 +1156,7 @@ static int stm8_write_core_reg(struct target *target, unsigned int num)
 	return ERROR_OK;
 }
 
-static const char *stm8_get_gdb_arch(struct target *target)
+static const char *stm8_get_gdb_arch(const struct target *target)
 {
 	return "stm8";
 }
@@ -1303,8 +1290,8 @@ static int stm8_arch_state(struct target *target)
 	return ERROR_OK;
 }
 
-static int stm8_step(struct target *target, int current,
-		target_addr_t address, int handle_breakpoints)
+static int stm8_step(struct target *target, bool current,
+		target_addr_t address, bool handle_breakpoints)
 {
 	LOG_DEBUG("%x " TARGET_ADDR_FMT " %x",
 		current, address, handle_breakpoints);
@@ -1314,11 +1301,11 @@ static int stm8_step(struct target *target, int current,
 	struct breakpoint *breakpoint = NULL;
 
 	if (target->state != TARGET_HALTED) {
-		LOG_WARNING("target not halted");
+		LOG_TARGET_ERROR(target, "not halted");
 		return ERROR_TARGET_NOT_HALTED;
 	}
 
-	/* current = 1: continue on current pc, otherwise continue at <address> */
+	/* current = true: continue on current pc, otherwise continue at <address> */
 	if (!current) {
 		buf_set_u32(stm8->core_cache->reg_list[STM8_PC].value, 0, 32, address);
 		stm8->core_cache->reg_list[STM8_PC].dirty = true;
@@ -1529,7 +1516,7 @@ static int stm8_remove_breakpoint(struct target *target,
 	struct stm8_common *stm8 = target_to_stm8(target);
 
 	if (target->state != TARGET_HALTED) {
-		LOG_WARNING("target not halted");
+		LOG_TARGET_ERROR(target, "not halted");
 		return ERROR_TARGET_NOT_HALTED;
 	}
 
@@ -1563,8 +1550,8 @@ static int stm8_set_watchpoint(struct target *target,
 	}
 
 	if (watchpoint->length != 1) {
-			LOG_ERROR("Only watchpoints of length 1 are supported");
-			return ERROR_TARGET_UNALIGNED_ACCESS;
+		LOG_ERROR("Only watchpoints of length 1 are supported");
+		return ERROR_TARGET_UNALIGNED_ACCESS;
 	}
 
 	enum hw_break_type enable = 0;
@@ -1665,7 +1652,7 @@ static int stm8_remove_watchpoint(struct target *target,
 	struct stm8_common *stm8 = target_to_stm8(target);
 
 	if (target->state != TARGET_HALTED) {
-		LOG_WARNING("target not halted");
+		LOG_TARGET_ERROR(target, "not halted");
 		return ERROR_TARGET_NOT_HALTED;
 	}
 
@@ -1795,14 +1782,14 @@ static int stm8_checksum_memory(struct target *target, target_addr_t address,
 
 /* run to exit point. return error if exit point was not reached. */
 static int stm8_run_and_wait(struct target *target, uint32_t entry_point,
-		int timeout_ms, uint32_t exit_point, struct stm8_common *stm8)
+		unsigned int timeout_ms, uint32_t exit_point, struct stm8_common *stm8)
 {
 	uint32_t pc;
 	int retval;
 	/* This code relies on the target specific resume() and
 	   poll()->debug_entry() sequence to write register values to the
 	   processor and the read them back */
-	retval = target_resume(target, 0, entry_point, 0, 1);
+	retval = target_resume(target, false, entry_point, false, true);
 	if (retval != ERROR_OK)
 		return retval;
 
@@ -1830,7 +1817,7 @@ static int stm8_run_and_wait(struct target *target, uint32_t entry_point,
 static int stm8_run_algorithm(struct target *target, int num_mem_params,
 		struct mem_param *mem_params, int num_reg_params,
 		struct reg_param *reg_params, target_addr_t entry_point,
-		target_addr_t exit_point, int timeout_ms, void *arch_info)
+		target_addr_t exit_point, unsigned int timeout_ms, void *arch_info)
 {
 	struct stm8_common *stm8 = target_to_stm8(target);
 

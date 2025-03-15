@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /*
  * Copyright(c) 2013 Intel Corporation.
  *
@@ -6,19 +8,6 @@
  * Ivan De Cesaris (ivan.de.cesaris@intel.com)
  * Julien Carreno (julien.carreno@intel.com)
  * Jeffrey Maxwell (jeffrey.r.maxwell@intel.com)
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Contact Information:
  * Intel Corporation
@@ -688,7 +677,7 @@ int x86_32_common_write_memory(struct target *t, target_addr_t addr,
 	return retval;
 }
 
-int x86_32_common_read_io(struct target *t, uint32_t addr,
+static int x86_32_common_read_io(struct target *t, uint32_t addr,
 			uint32_t size, uint8_t *buf)
 {
 	struct x86_32_common *x86_32 = target_to_x86_32(t);
@@ -1341,14 +1330,14 @@ static int write_hw_reg_from_cache(struct target *t, int num)
 
 /* x86 32 commands */
 static void handle_iod_output(struct command_invocation *cmd,
-		struct target *target, uint32_t address, unsigned size,
-		unsigned count, const uint8_t *buffer)
+		struct target *target, uint32_t address, unsigned int size,
+		unsigned int count, const uint8_t *buffer)
 {
-	const unsigned line_bytecnt = 32;
-	unsigned line_modulo = line_bytecnt / size;
+	const unsigned int line_bytecnt = 32;
+	unsigned int line_modulo = line_bytecnt / size;
 
 	char output[line_bytecnt * 4 + 1];
-	unsigned output_len = 0;
+	unsigned int output_len = 0;
 
 	const char *value_fmt;
 	switch (size) {
@@ -1367,12 +1356,12 @@ static void handle_iod_output(struct command_invocation *cmd,
 		return;
 	}
 
-	for (unsigned i = 0; i < count; i++) {
+	for (unsigned int i = 0; i < count; i++) {
 		if (i % line_modulo == 0) {
 			output_len += snprintf(output + output_len,
 					sizeof(output) - output_len,
-					"0x%8.8x: ",
-					(unsigned)(address + (i*size)));
+					"0x%8.8" PRIx32 ": ",
+					address + (i * size));
 		}
 
 		uint32_t value = 0;
@@ -1410,7 +1399,7 @@ COMMAND_HANDLER(handle_iod_command)
 		return ERROR_COMMAND_SYNTAX_ERROR;
 	}
 
-	unsigned size = 0;
+	unsigned int size = 0;
 	switch (CMD_NAME[2]) {
 	case 'w':
 		size = 4;
@@ -1424,7 +1413,7 @@ COMMAND_HANDLER(handle_iod_command)
 	default:
 		return ERROR_COMMAND_SYNTAX_ERROR;
 	}
-	unsigned count = 1;
+	unsigned int count = 1;
 	uint8_t *buffer = calloc(count, size);
 	struct target *target = get_current_target(CMD_CTX);
 	int retval = x86_32_common_read_io(target, address, size, buffer);
@@ -1436,7 +1425,7 @@ COMMAND_HANDLER(handle_iod_command)
 
 static int target_fill_io(struct target *target,
 		uint32_t address,
-		unsigned data_size,
+		unsigned int data_size,
 		/* value */
 		uint32_t b)
 {
@@ -1469,7 +1458,7 @@ COMMAND_HANDLER(handle_iow_command)
 	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[1], value);
 	struct target *target = get_current_target(CMD_CTX);
 
-	unsigned wordsize;
+	unsigned int wordsize;
 	switch (CMD_NAME[2]) {
 		case 'w':
 			wordsize = 4;

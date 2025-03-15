@@ -1,18 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2009-2010 by Simon Qian <SimonQian@SimonQian.com>       *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /* Versaloon is a programming tool for multiple MCUs.
@@ -52,12 +41,12 @@ static struct pending_scan_result
 	pending_scan_results_buffer[MAX_PENDING_SCAN_RESULTS];
 
 /* Queue command functions */
-static void vsllink_end_state(tap_state_t state);
+static void vsllink_end_state(enum tap_state state);
 static void vsllink_state_move(void);
-static void vsllink_path_move(int num_states, tap_state_t *path);
+static void vsllink_path_move(unsigned int num_states, enum tap_state *path);
 static void vsllink_tms(int num_bits, const uint8_t *bits);
-static void vsllink_runtest(int num_cycles);
-static void vsllink_stableclocks(int num_cycles, int tms);
+static void vsllink_runtest(unsigned int num_cycles);
+static void vsllink_stableclocks(unsigned int num_cycles, int tms);
 static void vsllink_scan(bool ir_scan, enum scan_type type,
 		uint8_t *buffer, int scan_size, struct scan_command *command);
 static int vsllink_reset(int trst, int srst);
@@ -95,9 +84,9 @@ static bool swd_mode;
 
 static struct vsllink *vsllink_handle;
 
-static int vsllink_execute_queue(void)
+static int vsllink_execute_queue(struct jtag_command *cmd_queue)
 {
-	struct jtag_command *cmd = jtag_command_queue;
+	struct jtag_command *cmd = cmd_queue;
 	int scan_size;
 	enum scan_type type;
 	uint8_t *buffer;
@@ -109,7 +98,7 @@ static int vsllink_execute_queue(void)
 	while (cmd) {
 		switch (cmd->type) {
 			case JTAG_RUNTEST:
-				LOG_DEBUG_IO("runtest %i cycles, end in %s",
+				LOG_DEBUG_IO("runtest %u cycles, end in %s",
 						cmd->cmd.runtest->num_cycles,
 						tap_state_name(cmd->cmd.runtest->end_state));
 
@@ -126,7 +115,7 @@ static int vsllink_execute_queue(void)
 				break;
 
 			case JTAG_PATHMOVE:
-				LOG_DEBUG_IO("pathmove: %i states, end in %s",
+				LOG_DEBUG_IO("pathmove: %u states, end in %s",
 						cmd->cmd.pathmove->num_states,
 						tap_state_name(cmd->cmd.pathmove->path[cmd->cmd.pathmove->num_states - 1]));
 
@@ -172,7 +161,7 @@ static int vsllink_execute_queue(void)
 				break;
 
 			case JTAG_STABLECLOCKS:
-				LOG_DEBUG_IO("add %d clocks",
+				LOG_DEBUG_IO("add %u clocks",
 						cmd->cmd.stableclocks->num_cycles);
 
 				switch (tap_get_state()) {
@@ -357,7 +346,7 @@ static int vsllink_init(void)
 /**************************************************************************
  * Queue command implementations */
 
-static void vsllink_end_state(tap_state_t state)
+static void vsllink_end_state(enum tap_state state)
 {
 	if (tap_is_state_stable(state))
 		tap_set_end_state(state);
@@ -382,9 +371,9 @@ static void vsllink_state_move(void)
 	tap_set_state(tap_get_end_state());
 }
 
-static void vsllink_path_move(int num_states, tap_state_t *path)
+static void vsllink_path_move(unsigned int num_states, enum tap_state *path)
 {
-	for (int i = 0; i < num_states; i++) {
+	for (unsigned int i = 0; i < num_states; i++) {
 		if (path[i] == tap_state_transition(tap_get_state(), false))
 			vsllink_tap_append_step(0, 0);
 		else if (path[i] == tap_state_transition(tap_get_state(), true))
@@ -408,7 +397,7 @@ static void vsllink_tms(int num_bits, const uint8_t *bits)
 		vsllink_tap_append_step((bits[i / 8] >> (i % 8)) & 1, 0);
 }
 
-static void vsllink_stableclocks(int num_cycles, int tms)
+static void vsllink_stableclocks(unsigned int num_cycles, int tms)
 {
 	while (num_cycles > 0) {
 		vsllink_tap_append_step(tms, 0);
@@ -416,9 +405,9 @@ static void vsllink_stableclocks(int num_cycles, int tms)
 	}
 }
 
-static void vsllink_runtest(int num_cycles)
+static void vsllink_runtest(unsigned int num_cycles)
 {
-	tap_state_t saved_end_state = tap_get_end_state();
+	enum tap_state saved_end_state = tap_get_end_state();
 
 	if (tap_get_state() != TAP_IDLE) {
 		/* enter IDLE state */
@@ -438,7 +427,7 @@ static void vsllink_runtest(int num_cycles)
 static void vsllink_scan(bool ir_scan, enum scan_type type, uint8_t *buffer,
 	int scan_size, struct scan_command *command)
 {
-	tap_state_t saved_end_state;
+	enum tap_state saved_end_state;
 
 	saved_end_state = tap_get_end_state();
 

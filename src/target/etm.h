@@ -1,22 +1,11 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /***************************************************************************
  *   Copyright (C) 2005, 2007 by Dominic Rath                              *
  *   Dominic.Rath@gmx.de                                                   *
  *                                                                         *
  *   Copyright (C) 2007 by Vincent Palatin                                 *
  *   vincent.palatin_openocd@m4x.org                                       *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifndef OPENOCD_TARGET_ETM_H
@@ -137,7 +126,7 @@ struct etm_capture_driver {
 	const char *name;
 	const struct command_registration *commands;
 	int (*init)(struct etm_context *etm_ctx);
-	trace_status_t (*status)(struct etm_context *etm_ctx);
+	enum trace_status (*status)(struct etm_context *etm_ctx);
 	int (*read_trace)(struct etm_context *etm_ctx);
 	int (*start_capture)(struct etm_context *etm_ctx);
 	int (*stop_capture)(struct etm_context *etm_ctx);
@@ -164,7 +153,7 @@ struct etm_context {
 	struct reg_cache *reg_cache;		/* ETM register cache */
 	struct etm_capture_driver *capture_driver;	/* driver used to access ETM data */
 	void *capture_driver_priv;	/* capture driver private data */
-	trace_status_t capture_status;	/* current state of capture run */
+	enum trace_status capture_status;	/* current state of capture run */
 	struct etmv1_trace_data *trace_data;	/* trace data */
 	uint32_t trace_depth;		/* number of cycles to be analyzed, 0 if no data available */
 	uint32_t control;	/* shadow of ETM_CTRL */
@@ -186,7 +175,7 @@ struct etm_context {
 };
 
 /* PIPESTAT values */
-typedef enum {
+enum etmv1_pipestat {
 	STAT_IE = 0x0,
 	STAT_ID = 0x1,
 	STAT_IN = 0x2,
@@ -195,10 +184,10 @@ typedef enum {
 	STAT_BD = 0x5,
 	STAT_TR = 0x6,
 	STAT_TD = 0x7
-} etmv1_pipestat_t;
+};
 
 /* branch reason values */
-typedef enum {
+enum etmv1_branch_reason {
 	BR_NORMAL  = 0x0, /* Normal PC change : periodic synchro (ETMv1.1) */
 	BR_ENABLE  = 0x1, /* Trace has been enabled */
 	BR_RESTART = 0x2, /* Trace restarted after a FIFO overflow */
@@ -207,7 +196,7 @@ typedef enum {
 	BR_RSVD5   = 0x5, /* reserved */
 	BR_RSVD6   = 0x6, /* reserved */
 	BR_RSVD7   = 0x7, /* reserved */
-} etmv1_branch_reason_t;
+};
 
 struct reg_cache *etm_build_reg_cache(struct target *target,
 		struct arm_jtag *jtag_info, struct etm_context *etm_ctx);

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /*
  *   Driver for USB-JTAG, Altera USB-Blaster and compatibles
  *
@@ -8,19 +10,6 @@
  *   Copyright (C) 2011 Ali Lown ali@lown.me.uk
  *   Copyright (C) 2009 Catalin Patulea cat@vv.carleton.ca
  *   Copyright (C) 2006 Kolja Waschk usbjtag@ixo.de
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -39,7 +28,7 @@ static struct ftdi_context *ublast_getftdic(struct ublast_lowlevel *low)
 }
 
 static int ublast_ftdi_read(struct ublast_lowlevel *low, uint8_t *buf,
-			    unsigned size, uint32_t *bytes_read)
+			    unsigned int size, uint32_t *bytes_read)
 {
 	int retval;
 	int timeout = 100;

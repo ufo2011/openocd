@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2015 by Bogdan Kolbov                                   *
  *   kolbov@niiet.ru                                                       *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -322,7 +311,7 @@ static int niietcm4_uflash_page_erase(struct flash_bank *bank, int page_num, int
 	/* status check */
 	retval = niietcm4_uopstatus_check(bank);
 	if (retval != ERROR_OK)
-			return retval;
+		return retval;
 
 	return retval;
 }
@@ -405,7 +394,7 @@ COMMAND_HANDLER(niietcm4_handle_uflash_read_byte_command)
 	uint32_t uflash_data;
 
 	if (strcmp("info", CMD_ARGV[0]) == 0)
-			uflash_cmd = UFMC_MAGIC_KEY | UFMC_READ_IFB;
+		uflash_cmd = UFMC_MAGIC_KEY | UFMC_READ_IFB;
 	else if (strcmp("main", CMD_ARGV[0]) == 0)
 		uflash_cmd = UFMC_MAGIC_KEY | UFMC_READ;
 	else
@@ -550,7 +539,7 @@ COMMAND_HANDLER(niietcm4_handle_uflash_erase_command)
 	int mem_type;
 
 	if (strcmp("info", CMD_ARGV[0]) == 0)
-			mem_type = 1;
+		mem_type = 1;
 	else if (strcmp("main", CMD_ARGV[0]) == 0)
 		mem_type = 0;
 	else
