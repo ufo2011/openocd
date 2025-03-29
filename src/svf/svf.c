@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *    Copyright (C) 2009 by Simon Qian                                     *
  *    SimonQian@SimonQian.com                                              *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /* The specification for SVF is available here:
@@ -33,6 +22,8 @@
 #include "svf.h"
 #include "helper/system.h"
 #include <helper/time_support.h>
+#include <helper/nvp.h>
+#include <stdbool.h>
 
 /* SVF command */
 enum svf_command {
@@ -84,10 +75,10 @@ static const char *svf_trst_mode_name[4] = {
 };
 
 struct svf_statemove {
-	tap_state_t from;
-	tap_state_t to;
+	enum tap_state from;
+	enum tap_state to;
 	uint32_t num_of_moves;
-	tap_state_t paths[8];
+	enum tap_state paths[8];
 };
 
 /*
@@ -150,6 +141,9 @@ static const struct svf_statemove svf_statemoves[] = {
 #define XXR_TDO				(1 << 1)
 #define XXR_MASK			(1 << 2)
 #define XXR_SMASK			(1 << 3)
+
+#define SVF_MAX_ADDCYCLES	255
+
 struct svf_xxr_para {
 	int len;
 	int data_mask;
@@ -161,10 +155,10 @@ struct svf_xxr_para {
 
 struct svf_para {
 	float frequency;
-	tap_state_t ir_end_state;
-	tap_state_t dr_end_state;
-	tap_state_t runtest_run_state;
-	tap_state_t runtest_end_state;
+	enum tap_state ir_end_state;
+	enum tap_state dr_end_state;
+	enum tap_state runtest_run_state;
+	enum tap_state runtest_end_state;
 	enum trst_mode trst_mode;
 
 	struct svf_xxr_para hir_para;
@@ -231,6 +225,8 @@ static int svf_buffer_index, svf_buffer_size;
 static int svf_quiet;
 static int svf_nil;
 static int svf_ignore_error;
+static bool svf_noreset;
+static int svf_addcycles;
 
 /* Targeting particular tap */
 static int svf_tap_is_specified;
@@ -249,7 +245,7 @@ static int svf_last_printed_percentage = -1;
 #define SVF_BUF_LOG(_lvl, _buf, _nbits, _desc)							\
 	svf_hexbuf_print(LOG_LVL_##_lvl,  __FILE__, __LINE__, __func__, _buf, _nbits, _desc)
 
-static void svf_hexbuf_print(int dbg_lvl, const char *file, unsigned line,
+static void svf_hexbuf_print(int dbg_lvl, const char *file, unsigned int line,
 							 const char *function, const uint8_t *buf,
 							 int bit_len, const char *desc)
 {
@@ -317,10 +313,10 @@ static void svf_free_xxd_para(struct svf_xxr_para *para)
 	}
 }
 
-int svf_add_statemove(tap_state_t state_to)
+int svf_add_statemove(enum tap_state state_to)
 {
-	tap_state_t state_from = cmd_queue_cur_state;
-	unsigned index_var;
+	enum tap_state state_from = cmd_queue_cur_state;
+	unsigned int index_var;
 
 	/* when resetting, be paranoid and ignore current state */
 	if (state_to == TAP_RESET) {
@@ -351,19 +347,51 @@ int svf_add_statemove(tap_state_t state_to)
 	return ERROR_FAIL;
 }
 
+enum svf_cmd_param {
+	OPT_ADDCYCLES,
+	OPT_IGNORE_ERROR,
+	OPT_NIL,
+	OPT_NORESET,
+	OPT_PROGRESS,
+	OPT_QUIET,
+	OPT_TAP,
+	/* DEPRECATED */
+	DEPRECATED_OPT_IGNORE_ERROR,
+	DEPRECATED_OPT_NIL,
+	DEPRECATED_OPT_PROGRESS,
+	DEPRECATED_OPT_QUIET,
+};
+
+static const struct nvp svf_cmd_opts[] = {
+	{ .name = "-addcycles",    .value = OPT_ADDCYCLES },
+	{ .name = "-ignore_error", .value = OPT_IGNORE_ERROR },
+	{ .name = "-nil",          .value = OPT_NIL },
+	{ .name = "-noreset",      .value = OPT_NORESET },
+	{ .name = "-progress",     .value = OPT_PROGRESS },
+	{ .name = "-quiet",        .value = OPT_QUIET },
+	{ .name = "-tap",          .value = OPT_TAP },
+	/* DEPRECATED */
+	{ .name = "ignore_error",  .value = DEPRECATED_OPT_IGNORE_ERROR },
+	{ .name = "nil",           .value = DEPRECATED_OPT_NIL },
+	{ .name = "progress",      .value = DEPRECATED_OPT_PROGRESS },
+	{ .name = "quiet",         .value = DEPRECATED_OPT_QUIET },
+	{ .name = NULL,            .value = -1 }
+};
+
 COMMAND_HANDLER(handle_svf_command)
 {
 #define SVF_MIN_NUM_OF_OPTIONS 1
-#define SVF_MAX_NUM_OF_OPTIONS 5
+#define SVF_MAX_NUM_OF_OPTIONS 8
 	int command_num = 0;
 	int ret = ERROR_OK;
 	int64_t time_measure_ms;
 	int time_measure_s, time_measure_m;
 
-	/* use NULL to indicate a "plain" svf file which accounts for
+	/*
+	 * use NULL to indicate a "plain" svf file which accounts for
 	 * any additional devices in the scan chain, otherwise the device
 	 * that should be affected
-	*/
+	 */
 	struct jtag_tap *tap = NULL;
 
 	if ((CMD_ARGC < SVF_MIN_NUM_OF_OPTIONS) || (CMD_ARGC > SVF_MAX_NUM_OF_OPTIONS))
@@ -374,34 +402,78 @@ COMMAND_HANDLER(handle_svf_command)
 	svf_nil = 0;
 	svf_progress_enabled = 0;
 	svf_ignore_error = 0;
+	svf_noreset = false;
+	svf_addcycles = 0;
+
 	for (unsigned int i = 0; i < CMD_ARGC; i++) {
-		if (strcmp(CMD_ARGV[i], "-tap") == 0) {
+		const struct nvp *n = nvp_name2value(svf_cmd_opts, CMD_ARGV[i]);
+		switch (n->value) {
+		case OPT_ADDCYCLES:
+			svf_addcycles = atoi(CMD_ARGV[i + 1]);
+			if (svf_addcycles > SVF_MAX_ADDCYCLES) {
+				command_print(CMD, "addcycles: %s out of range", CMD_ARGV[i + 1]);
+				if (svf_fd)
+					fclose(svf_fd);
+				svf_fd = NULL;
+				return ERROR_COMMAND_ARGUMENT_INVALID;
+			}
+			i++;
+			break;
+
+		case OPT_TAP:
 			tap = jtag_tap_by_string(CMD_ARGV[i+1]);
 			if (!tap) {
 				command_print(CMD, "Tap: %s unknown", CMD_ARGV[i+1]);
-				return ERROR_FAIL;
+				if (svf_fd)
+					fclose(svf_fd);
+				svf_fd = NULL;
+				return ERROR_COMMAND_ARGUMENT_INVALID;
 			}
 			i++;
-		} else if ((strcmp(CMD_ARGV[i],
-				"quiet") == 0) || (strcmp(CMD_ARGV[i], "-quiet") == 0))
+			break;
+
+		case DEPRECATED_OPT_QUIET:
+			LOG_INFO("DEPRECATED flag '%s'; use '-%s'", CMD_ARGV[i], CMD_ARGV[i]);
+			/* fallthrough */
+		case OPT_QUIET:
 			svf_quiet = 1;
-		else if ((strcmp(CMD_ARGV[i], "nil") == 0) || (strcmp(CMD_ARGV[i], "-nil") == 0))
+			break;
+
+		case DEPRECATED_OPT_NIL:
+			LOG_INFO("DEPRECATED flag '%s'; use '-%s'", CMD_ARGV[i], CMD_ARGV[i]);
+			/* fallthrough */
+		case OPT_NIL:
 			svf_nil = 1;
-		else if ((strcmp(CMD_ARGV[i],
-				  "progress") == 0) || (strcmp(CMD_ARGV[i], "-progress") == 0))
+			break;
+
+		case DEPRECATED_OPT_PROGRESS:
+			LOG_INFO("DEPRECATED flag '%s'; use '-%s'", CMD_ARGV[i], CMD_ARGV[i]);
+			/* fallthrough */
+		case OPT_PROGRESS:
 			svf_progress_enabled = 1;
-		else if ((strcmp(CMD_ARGV[i],
-				  "ignore_error") == 0) || (strcmp(CMD_ARGV[i], "-ignore_error") == 0))
+			break;
+
+		case DEPRECATED_OPT_IGNORE_ERROR:
+			LOG_INFO("DEPRECATED flag '%s'; use '-%s'", CMD_ARGV[i], CMD_ARGV[i]);
+			/* fallthrough */
+		case OPT_IGNORE_ERROR:
 			svf_ignore_error = 1;
-		else {
+			break;
+
+		case OPT_NORESET:
+			svf_noreset = true;
+			break;
+
+		default:
 			svf_fd = fopen(CMD_ARGV[i], "r");
 			if (!svf_fd) {
 				int err = errno;
 				command_print(CMD, "open(\"%s\"): %s", CMD_ARGV[i], strerror(err));
 				/* no need to free anything now */
 				return ERROR_COMMAND_SYNTAX_ERROR;
-			} else
-				LOG_USER("svf processing file: \"%s\"", CMD_ARGV[i]);
+			}
+			LOG_USER("svf processing file: \"%s\"", CMD_ARGV[i]);
+			break;
 		}
 	}
 
@@ -435,7 +507,7 @@ COMMAND_HANDLER(handle_svf_command)
 
 	memcpy(&svf_para, &svf_para_init, sizeof(svf_para));
 
-	if (!svf_nil) {
+	if (!svf_nil && !svf_noreset) {
 		/* TAP_RESET */
 		jtag_add_tlr();
 	}
@@ -460,27 +532,31 @@ COMMAND_HANDLER(handle_svf_command)
 		}
 
 		/* HDR %d TDI (0) */
-		if (svf_set_padding(&svf_para.hdr_para, header_dr_len, 0) != ERROR_OK) {
-			LOG_ERROR("failed to set data header");
-			return ERROR_FAIL;
+		ret = svf_set_padding(&svf_para.hdr_para, header_dr_len, 0);
+		if (ret != ERROR_OK) {
+			command_print(CMD, "failed to set data header");
+			goto free_all;
 		}
 
 		/* HIR %d TDI (0xFF) */
-		if (svf_set_padding(&svf_para.hir_para, header_ir_len, 0xFF) != ERROR_OK) {
-			LOG_ERROR("failed to set instruction header");
-			return ERROR_FAIL;
+		ret = svf_set_padding(&svf_para.hir_para, header_ir_len, 0xFF);
+		if (ret != ERROR_OK) {
+			command_print(CMD, "failed to set instruction header");
+			goto free_all;
 		}
 
 		/* TDR %d TDI (0) */
-		if (svf_set_padding(&svf_para.tdr_para, trailer_dr_len, 0) != ERROR_OK) {
-			LOG_ERROR("failed to set data trailer");
-			return ERROR_FAIL;
+		ret = svf_set_padding(&svf_para.tdr_para, trailer_dr_len, 0);
+		if (ret != ERROR_OK) {
+			command_print(CMD, "failed to set data trailer");
+			goto free_all;
 		}
 
 		/* TIR %d TDI (0xFF) */
-		if (svf_set_padding(&svf_para.tir_para, trailer_ir_len, 0xFF) != ERROR_OK) {
-			LOG_ERROR("failed to set instruction trailer");
-			return ERROR_FAIL;
+		ret = svf_set_padding(&svf_para.tir_para, trailer_ir_len, 0xFF);
+		if (ret != ERROR_OK) {
+			command_print(CMD, "failed to set instruction trailer");
+			goto free_all;
 		}
 	}
 
@@ -539,7 +615,7 @@ COMMAND_HANDLER(handle_svf_command)
 free_all:
 
 	fclose(svf_fd);
-	svf_fd = 0;
+	svf_fd = NULL;
 
 	/* free buffers */
 	free(svf_command_buffer);
@@ -740,7 +816,7 @@ parse_char:
 	return ERROR_OK;
 }
 
-bool svf_tap_state_is_stable(tap_state_t state)
+bool svf_tap_state_is_stable(enum tap_state state)
 {
 	return (state == TAP_RESET) || (state == TAP_IDLE)
 			|| (state == TAP_DRPAUSE) || (state == TAP_IRPAUSE);
@@ -856,7 +932,7 @@ static int svf_check_tdo(void)
 		index_var = svf_check_tdo_para[i].buffer_offset;
 		len = svf_check_tdo_para[i].bit_len;
 		if ((svf_check_tdo_para[i].enabled)
-				&& buf_cmp_mask(&svf_tdi_buffer[index_var], &svf_tdo_buffer[index_var],
+				&& !buf_eq_mask(&svf_tdi_buffer[index_var], &svf_tdo_buffer[index_var],
 				&svf_mask_buffer[index_var], len)) {
 			LOG_ERROR("tdo check error at line %d",
 				svf_check_tdo_para[i].line_num);
@@ -919,7 +995,7 @@ static int svf_run_command(struct command_context *cmd_ctx, char *cmd_str)
 	uint8_t **pbuffer_tmp;
 	struct scan_field field;
 	/* for STATE */
-	tap_state_t *path = NULL, state;
+	enum tap_state *path = NULL, state;
 	/* flag padding commands skipped due to -tap command */
 	int padding_command_skipped = 0;
 
@@ -1200,6 +1276,9 @@ xxr_common:
 							svf_para.dr_end_state);
 				}
 
+				if (svf_addcycles)
+					jtag_add_clocks(svf_addcycles);
+
 				svf_buffer_index += (i + 7) >> 3;
 			} else if (command == SIR) {
 				/* check buffer size first, reallocate if necessary */
@@ -1419,7 +1498,7 @@ xxr_common:
 			}
 			if (num_of_argu > 2) {
 				/* STATE pathstate1 ... stable_state */
-				path = malloc((num_of_argu - 1) * sizeof(tap_state_t));
+				path = malloc((num_of_argu - 1) * sizeof(enum tap_state));
 				if (!path) {
 					LOG_ERROR("not enough memory");
 					return ERROR_FAIL;
@@ -1556,7 +1635,7 @@ static const struct command_registration svf_command_handlers[] = {
 		.handler = handle_svf_command,
 		.mode = COMMAND_EXEC,
 		.help = "Runs a SVF file.",
-		.usage = "[-tap device.tap] <file> [quiet] [nil] [progress] [ignore_error]",
+		.usage = "[-tap device.tap] [-quiet] [-nil] [-progress] [-ignore_error] [-noreset] [-addcycles numcycles] file",
 	},
 	COMMAND_REGISTRATION_DONE
 };

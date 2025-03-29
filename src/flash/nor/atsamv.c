@@ -1,63 +1,22 @@
-/***************************************************************************
- *   Copyright (C) 2009 by Duane Ellis                                     *
- *   openocd@duaneellis.com                                                *
- *                                                                         *
- *   Copyright (C) 2010 by Olaf Lüke (at91sam3s* support)                  *
- *   olaf@uni-paderborn.de                                                 *
- *                                                                         *
- *   Copyright (C) 2011 by Olivier Schonken, Jim Norris                    *
- *   (at91sam3x* & at91sam4 support)*                                      *
- *                                                                         *
- *   Copyright (C) 2015 Morgan Quigley                                     *
- *   (atsamv, atsams, and atsame support)                                  *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
- ***************************************************************************/
+// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-Source-Code)
 
-/* Some of the lower level code was based on code supplied by
- * ATMEL under this copyright. */
-
-/* BEGIN ATMEL COPYRIGHT */
-/* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
- * ----------------------------------------------------------------------------
- * Copyright (c) 2009, Atmel Corporation
+/*
+ * Copyright (C) 2009 by Duane Ellis <openocd@duaneellis.com>
  *
- * All rights reserved.
+ * at91sam3s* support
+ * Copyright (C) 2010 by Olaf Lüke <olaf@uni-paderborn.de>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * at91sam3x* & at91sam4 support
+ * Copyright (C) 2011 by Olivier Schonken and Jim Norris
  *
- * - Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the disclaimer below.
+ * atsamv, atsams, and atsame support
+ * Copyright (C) 2015 Morgan Quigley
  *
- * Atmel's name may not be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
- * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ----------------------------------------------------------------------------
+ * Some of the lower level code was based on code supplied by
+ * ATMEL under BSD-Source-Code License and this copyright.
+ * ATMEL Microcontroller Software Support
+ * Copyright (c) 2009, Atmel Corporation. All rights reserved.
  */
-/* END ATMEL COPYRIGHT */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -94,12 +53,10 @@
 #define SAMV_PAGE_SIZE                 512
 #define SAMV_FLASH_BASE         0x00400000
 
-extern const struct flash_driver atsamv_flash;
-
 struct samv_flash_bank {
 	bool      probed;
-	unsigned size_bytes;
-	unsigned gpnvm[SAMV_NUM_GPNVM_BITS];
+	unsigned int size_bytes;
+	unsigned int gpnvm[SAMV_NUM_GPNVM_BITS];
 };
 
 /* The actual sector size of the SAMV7 flash memory is 128K bytes.
@@ -125,7 +82,7 @@ static int samv_efc_get_result(struct target *target, uint32_t *v)
 }
 
 static int samv_efc_start_command(struct target *target,
-		unsigned command, unsigned argument)
+		unsigned int command, unsigned int argument)
 {
 	uint32_t v;
 	samv_efc_get_status(target, &v);
@@ -143,7 +100,7 @@ static int samv_efc_start_command(struct target *target,
 }
 
 static int samv_efc_perform_command(struct target *target,
-		unsigned command, unsigned argument, uint32_t *status)
+		unsigned int command, unsigned int argument, uint32_t *status)
 {
 	int r;
 	uint32_t v;
@@ -209,7 +166,7 @@ static int samv_erase_pages(struct target *target,
 			first_page | erase_pages, status);
 }
 
-static int samv_get_gpnvm(struct target *target, unsigned gpnvm, unsigned *out)
+static int samv_get_gpnvm(struct target *target, unsigned int gpnvm, unsigned int *out)
 {
 	uint32_t v;
 	int r;
@@ -233,10 +190,10 @@ static int samv_get_gpnvm(struct target *target, unsigned gpnvm, unsigned *out)
 	return r;
 }
 
-static int samv_clear_gpnvm(struct target *target, unsigned gpnvm)
+static int samv_clear_gpnvm(struct target *target, unsigned int gpnvm)
 {
 	int r;
-	unsigned v;
+	unsigned int v;
 
 	if (gpnvm >= SAMV_NUM_GPNVM_BITS) {
 		LOG_ERROR("invalid gpnvm %d, max: %d", gpnvm, SAMV_NUM_GPNVM_BITS);
@@ -252,10 +209,10 @@ static int samv_clear_gpnvm(struct target *target, unsigned gpnvm)
 	return r;
 }
 
-static int samv_set_gpnvm(struct target *target, unsigned gpnvm)
+static int samv_set_gpnvm(struct target *target, unsigned int gpnvm)
 {
 	int r;
-	unsigned v;
+	unsigned int v;
 	if (gpnvm >= SAMV_NUM_GPNVM_BITS) {
 		LOG_ERROR("invalid gpnvm %d, max: %d", gpnvm, SAMV_NUM_GPNVM_BITS);
 		return ERROR_FAIL;
@@ -274,7 +231,7 @@ static int samv_set_gpnvm(struct target *target, unsigned gpnvm)
 }
 
 static int samv_flash_unlock(struct target *target,
-		unsigned start_sector, unsigned end_sector)
+		unsigned int start_sector, unsigned int end_sector)
 {
 	int r;
 	uint32_t status;
@@ -294,7 +251,7 @@ static int samv_flash_unlock(struct target *target,
 }
 
 static int samv_flash_lock(struct target *target,
-		unsigned start_sector, unsigned end_sector)
+		unsigned int start_sector, unsigned int end_sector)
 {
 	uint32_t status;
 	uint32_t pg;
@@ -462,7 +419,7 @@ static int samv_protect(struct flash_bank *bank, int set, unsigned int first,
 }
 
 static int samv_page_read(struct target *target,
-		unsigned page_num, uint8_t *buf)
+		unsigned int page_num, uint8_t *buf)
 {
 	uint32_t addr = SAMV_FLASH_BASE + page_num * SAMV_PAGE_SIZE;
 	int r = target_read_memory(target, addr, 4, SAMV_PAGE_SIZE / 4, buf);
@@ -473,7 +430,7 @@ static int samv_page_read(struct target *target,
 }
 
 static int samv_page_write(struct target *target,
-		unsigned pagenum, const uint8_t *buf)
+		unsigned int pagenum, const uint8_t *buf)
 {
 	uint32_t status;
 	const uint32_t addr = SAMV_FLASH_BASE + pagenum * SAMV_PAGE_SIZE;
@@ -661,7 +618,7 @@ COMMAND_HANDLER(samv_handle_gpnvm_command)
 			return ERROR_COMMAND_SYNTAX_ERROR;
 	}
 
-	unsigned v = 0;
+	unsigned int v = 0;
 	if (!strcmp("show", CMD_ARGV[0])) {
 		if (who == -1) {
 showall:

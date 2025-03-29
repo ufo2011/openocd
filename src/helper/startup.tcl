@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 # Defines basic Tcl procs that must exist for OpenOCD scripts to work.
 #
 # Embedded into OpenOCD executable
@@ -9,10 +11,10 @@ proc find {filename} {
 	if {[catch {ocd_find $filename} t]==0} {
 		return $t
 	}
-	if {[catch {ocd_find [string map {\ /} $filename} t]==0} {
+	if {[catch {ocd_find [string map {\\ /} $filename]} t]==0} {
 		return $t
 	}
-	if {[catch {ocd_find [string map {/ \\} $filename} t]==0} {
+	if {[catch {ocd_find [string map {/ \\} $filename]} t]==0} {
 		return $t
 	}
 	# make sure error message matches original input string

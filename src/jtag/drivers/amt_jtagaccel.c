@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -157,7 +146,7 @@ static int amt_jtagaccel_speed(int speed)
 	return ERROR_OK;
 }
 
-static void amt_jtagaccel_end_state(tap_state_t state)
+static void amt_jtagaccel_end_state(enum tap_state state)
 {
 	if (tap_is_state_stable(state))
 		tap_set_end_state(state);
@@ -190,8 +179,8 @@ static void amt_jtagaccel_state_move(void)
 	uint8_t aw_scan_tms_5;
 	uint8_t tms_scan[2];
 
-	tap_state_t cur_state = tap_get_state();
-	tap_state_t end_state = tap_get_end_state();
+	enum tap_state cur_state = tap_get_state();
+	enum tap_state end_state = tap_get_end_state();
 
 	tms_scan[0] = amt_jtagaccel_tap_move[tap_move_ndx(cur_state)][tap_move_ndx(end_state)][0];
 	tms_scan[1] = amt_jtagaccel_tap_move[tap_move_ndx(cur_state)][tap_move_ndx(end_state)][1];
@@ -214,13 +203,13 @@ static void amt_jtagaccel_state_move(void)
 	tap_set_state(end_state);
 }
 
-static void amt_jtagaccel_runtest(int num_cycles)
+static void amt_jtagaccel_runtest(unsigned int num_cycles)
 {
 	int i = 0;
 	uint8_t aw_scan_tms_5;
 	uint8_t aw_scan_tms_1to4;
 
-	tap_state_t saved_end_state = tap_get_end_state();
+	enum tap_state saved_end_state = tap_get_end_state();
 
 	/* only do a state_move when we're not already in IDLE */
 	if (tap_get_state() != TAP_IDLE) {
@@ -248,7 +237,7 @@ static void amt_jtagaccel_scan(bool ir_scan, enum scan_type type, uint8_t *buffe
 {
 	int bits_left = scan_size;
 	int bit_count = 0;
-	tap_state_t saved_end_state = tap_get_end_state();
+	enum tap_state saved_end_state = tap_get_end_state();
 	uint8_t aw_tdi_option;
 	uint8_t dw_tdi_scan;
 	uint8_t dr_tdo;
@@ -328,9 +317,9 @@ static void amt_jtagaccel_scan(bool ir_scan, enum scan_type type, uint8_t *buffe
 	tap_set_state(tap_get_end_state());
 }
 
-static int amt_jtagaccel_execute_queue(void)
+static int amt_jtagaccel_execute_queue(struct jtag_command *cmd_queue)
 {
-	struct jtag_command *cmd = jtag_command_queue;	/* currently processed command */
+	struct jtag_command *cmd = cmd_queue;	/* currently processed command */
 	int scan_size;
 	enum scan_type type;
 	uint8_t *buffer;

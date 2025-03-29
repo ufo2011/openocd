@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /***************************************************************************
  *   Copyright (C) 2009 by Alexei Babich                                   *
  *   Rezonans plc., Chelyabinsk, Russia                                    *
@@ -5,19 +7,6 @@
  *                                                                         *
  *   Copyright (C) 2011 by Erik Ahlen                                      *
  *   Avalon Innovation, Sweden                                             *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifndef OPENOCD_FLASH_NAND_MXC_H
@@ -149,11 +138,11 @@ enum mxc_nf_finalize_action {
 };
 
 struct mxc_nf_flags {
-	unsigned target_little_endian:1;
-	unsigned nand_readonly:1;
-	unsigned one_kb_sram:1;
-	unsigned hw_ecc_enabled:1;
-	unsigned biswap_enabled:1;
+	unsigned int target_little_endian:1;
+	unsigned int nand_readonly:1;
+	unsigned int one_kb_sram:1;
+	unsigned int hw_ecc_enabled:1;
+	unsigned int biswap_enabled:1;
 };
 
 struct mxc_nf_controller {

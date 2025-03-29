@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2014 by Marian Cingel                                   *
  *   cingel.marian@gmail.com                                               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -24,7 +13,6 @@
 #include <helper/time_support.h>
 #include <jtag/jtag.h>
 #include "target/target.h"
-#include "target/target_type.h"
 #include "rtos.h"
 #include "helper/log.h"
 #include "helper/types.h"
@@ -260,13 +248,13 @@ static int mqx_create(
 {
 	/* check target name against supported architectures */
 	for (unsigned int i = 0; i < ARRAY_SIZE(mqx_params_list); i++) {
-		if (strcmp(mqx_params_list[i].target_name, target->type->name) == 0) {
+		if (strcmp(mqx_params_list[i].target_name, target_type_name(target)) == 0) {
 			target->rtos->rtos_specific_params = (void *)&mqx_params_list[i];
-			/* LOG_DEBUG("MQX RTOS - valid architecture: %s", target->type->name); */
+			/* LOG_DEBUG("MQX RTOS - valid architecture: %s", target_type_name(target)); */
 			return 0;
 		}
 	}
-	LOG_ERROR("MQX RTOS - could not find target \"%s\" in MQX compatibility list", target->type->name);
+	LOG_ERROR("MQX RTOS - could not find target \"%s\" in MQX compatibility list", target_type_name(target));
 	return -1;
 }
 
@@ -331,7 +319,7 @@ static int mqx_update_threads(
 		i < (uint32_t)rtos->thread_count;
 		i++
 	) {
-		uint8_t task_name[MQX_THREAD_NAME_LENGTH + 1];
+		char task_name[MQX_THREAD_NAME_LENGTH + 1];
 		uint32_t task_addr = 0, task_template = 0, task_state = 0;
 		uint32_t task_name_addr = 0, task_id = 0, task_errno = 0;
 		uint32_t state_index = 0;
@@ -392,10 +380,9 @@ static int mqx_update_threads(
 		rtos->thread_details[i].threadid = task_id;
 		rtos->thread_details[i].exists = true;
 		/* set thread name */
-		rtos->thread_details[i].thread_name_str = malloc(strlen((void *)task_name) + 1);
+		rtos->thread_details[i].thread_name_str = strdup(task_name);
 		if (!rtos->thread_details[i].thread_name_str)
 			return ERROR_FAIL;
-		strcpy(rtos->thread_details[i].thread_name_str, (void *)task_name);
 		/* set thread extra info
 		 * - task state
 		 * - task address
@@ -509,7 +496,7 @@ static int mqx_get_symbol_list_to_lookup(struct symbol_table_elem *symbol_list[]
 	return ERROR_OK;
 }
 
-struct rtos_type mqx_rtos = {
+const struct rtos_type mqx_rtos = {
 	.name = "mqx",
 	.detect_rtos = mqx_detect_rtos,
 	.create = mqx_create,

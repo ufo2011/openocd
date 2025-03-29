@@ -1,17 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2019 by Andreas Bolsch <andreas.bolsch@mni.thm.de	   *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or	   *
- *   (at your option) any later version.								   *
- *																		   *
- *   This program is distributed in the hope that it will be useful,	   *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of		   *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the		   *
- *   GNU General Public License for more details.						   *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License	   *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -22,7 +12,6 @@
 #include "spi.h"
 #include "sfdp.h"
 
-#define SFDP_MAGIC			0x50444653
 #define SFDP_ACCESS_PROT	0xFF
 #define SFDP_BASIC_FLASH	0xFF00
 #define SFDP_4BYTE_ADDR		0xFF84
@@ -110,11 +99,11 @@ int spi_sfdp(struct flash_bank *bank, struct flash_device *dev,
 		goto err;
 
 	for (k = 0; k < nph; k++) {
-		uint8_t words = (pheaders[k].revision >> 24) & 0xFF;
+		unsigned int words = (pheaders[k].revision >> 24) & 0xFF;
 		uint16_t id = (((pheaders[k].ptr) >> 16) & 0xFF00) | (pheaders[k].revision & 0xFF);
 		uint32_t ptr = pheaders[k].ptr & 0xFFFFFF;
 
-		LOG_DEBUG("pheader %d len=0x%02" PRIx8 " id=0x%04" PRIx16
+		LOG_DEBUG("pheader %d len=0x%02x id=0x%04" PRIx16
 			" ptr=0x%06" PRIx32, k, words, id, ptr);
 
 		/* retrieve parameter table */

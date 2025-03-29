@@ -1,19 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *                                                                         *
  * Copyright (C) ST-Ericsson SA 2011                                       *
  * Author: Michel Jaouen <michel.jaouen@stericsson.com> for ST-Ericsson.   *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -129,7 +119,7 @@ COMMAND_HANDLER(default_handle_smp_command)
 			head->target->smp = 0;
 
 		/* fixes the target display to the debugger */
-		if (!list_empty(target->smp_targets))
+		if (!list_empty(target->smp_targets) && target->gdb_service)
 			target->gdb_service->target = target;
 
 		return ERROR_OK;
@@ -142,6 +132,9 @@ COMMAND_HANDLER(handle_smp_gdb_command)
 {
 	struct target *target = get_current_target(CMD_CTX);
 	int retval = ERROR_OK;
+
+	LOG_WARNING(DEPRECATED_MSG);
+
 	if (!list_empty(target->smp_targets)) {
 		if (CMD_ARGC == 1) {
 			int coreid = 0;

@@ -1,17 +1,8 @@
-/***************************************************************************
- *   Copyright (C) 2015 by Esben Haabendal                                 *
- *   eha@deif.com                                                          *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- ***************************************************************************/
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+/*
+ * Copyright (C) 2015 by Esben Haabendal <eha@deif.com>
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -64,15 +55,15 @@ static int ls1_sap_halt(struct target *target)
 	return ERROR_OK;
 }
 
-static int ls1_sap_resume(struct target *target, int current, target_addr_t address,
-		int handle_breakpoints, int debug_execution)
+static int ls1_sap_resume(struct target *target, bool current,
+		target_addr_t address, bool handle_breakpoints, bool debug_execution)
 {
 	LOG_DEBUG("%s", __func__);
 	return ERROR_OK;
 }
 
-static int ls1_sap_step(struct target *target, int current, target_addr_t address,
-				int handle_breakpoints)
+static int ls1_sap_step(struct target *target, bool current,
+		target_addr_t address, bool handle_breakpoints)
 {
 	LOG_DEBUG("%s", __func__);
 	return ERROR_OK;

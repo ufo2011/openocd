@@ -1,20 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2010 by Michal Demin                                    *
  *   based on usbprog.c and arm-jtag-ew.c                                  *
  *   Several fixes by R. Diez in 2013.                                     *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -31,18 +20,18 @@
 
 #undef DEBUG_SERIAL
 /*#define DEBUG_SERIAL */
-static int buspirate_execute_queue(void);
+static int buspirate_execute_queue(struct jtag_command *cmd_queue);
 static int buspirate_init(void);
 static int buspirate_quit(void);
 static int buspirate_reset(int trst, int srst);
 
-static void buspirate_end_state(tap_state_t state);
+static void buspirate_end_state(enum tap_state state);
 static void buspirate_state_move(void);
-static void buspirate_path_move(int num_states, tap_state_t *path);
-static void buspirate_runtest(int num_cycles);
+static void buspirate_path_move(unsigned int num_states, enum tap_state *path);
+static void buspirate_runtest(unsigned int num_cycles);
 static void buspirate_scan(bool ir_scan, enum scan_type type,
 	uint8_t *buffer, int scan_size, struct scan_command *command);
-static void buspirate_stableclocks(int num_cycles);
+static void buspirate_stableclocks(unsigned int num_cycles);
 
 #define CMD_UNKNOWN       0x00
 #define CMD_PORT_MODE     0x01
@@ -162,10 +151,10 @@ static int buspirate_serial_read(int fd, uint8_t *buf, int size);
 static void buspirate_serial_close(int fd);
 static void buspirate_print_buffer(uint8_t *buf, int size);
 
-static int buspirate_execute_queue(void)
+static int buspirate_execute_queue(struct jtag_command *cmd_queue)
 {
 	/* currently processed command */
-	struct jtag_command *cmd = jtag_command_queue;
+	struct jtag_command *cmd = cmd_queue;
 	int scan_size;
 	enum scan_type type;
 	uint8_t *buffer;
@@ -173,7 +162,7 @@ static int buspirate_execute_queue(void)
 	while (cmd) {
 		switch (cmd->type) {
 		case JTAG_RUNTEST:
-			LOG_DEBUG_IO("runtest %i cycles, end in %s",
+			LOG_DEBUG_IO("runtest %u cycles, end in %s",
 				cmd->cmd.runtest->num_cycles,
 				tap_state_name(cmd->cmd.runtest
 					->end_state));
@@ -191,7 +180,7 @@ static int buspirate_execute_queue(void)
 			buspirate_state_move();
 			break;
 		case JTAG_PATHMOVE:
-			LOG_DEBUG_IO("pathmove: %i states, end in %s",
+			LOG_DEBUG_IO("pathmove: %u states, end in %s",
 				cmd->cmd.pathmove->num_states,
 				tap_state_name(cmd->cmd.pathmove
 					->path[cmd->cmd.pathmove
@@ -221,7 +210,7 @@ static int buspirate_execute_queue(void)
 			jtag_sleep(cmd->cmd.sleep->us);
 				break;
 		case JTAG_STABLECLOCKS:
-			LOG_DEBUG_IO("stable clock %i cycles", cmd->cmd.stableclocks->num_cycles);
+			LOG_DEBUG_IO("stable clock %u cycles", cmd->cmd.stableclocks->num_cycles);
 			buspirate_stableclocks(cmd->cmd.stableclocks->num_cycles);
 				break;
 		default:
@@ -565,7 +554,7 @@ struct adapter_driver buspirate_adapter_driver = {
 };
 
 /*************** jtag execute commands **********************/
-static void buspirate_end_state(tap_state_t state)
+static void buspirate_end_state(enum tap_state state)
 {
 	if (tap_is_state_stable(state))
 		tap_set_end_state(state);
@@ -591,11 +580,9 @@ static void buspirate_state_move(void)
 	tap_set_state(tap_get_end_state());
 }
 
-static void buspirate_path_move(int num_states, tap_state_t *path)
+static void buspirate_path_move(unsigned int num_states, enum tap_state *path)
 {
-	int i;
-
-	for (i = 0; i < num_states; i++) {
+	for (unsigned int i = 0; i < num_states; i++) {
 		if (tap_state_transition(tap_get_state(), false) == path[i]) {
 			buspirate_tap_append(0, 0);
 		} else if (tap_state_transition(tap_get_state(), true)
@@ -615,11 +602,9 @@ static void buspirate_path_move(int num_states, tap_state_t *path)
 	tap_set_end_state(tap_get_state());
 }
 
-static void buspirate_runtest(int num_cycles)
+static void buspirate_runtest(unsigned int num_cycles)
 {
-	int i;
-
-	tap_state_t saved_end_state = tap_get_end_state();
+	enum tap_state saved_end_state = tap_get_end_state();
 
 	/* only do a state_move when we're not already in IDLE */
 	if (tap_get_state() != TAP_IDLE) {
@@ -627,7 +612,7 @@ static void buspirate_runtest(int num_cycles)
 		buspirate_state_move();
 	}
 
-	for (i = 0; i < num_cycles; i++)
+	for (unsigned int i = 0; i < num_cycles; i++)
 		buspirate_tap_append(0, 0);
 
 	LOG_DEBUG_IO("runtest: cur_state %s end_state %s",
@@ -643,7 +628,7 @@ static void buspirate_runtest(int num_cycles)
 static void buspirate_scan(bool ir_scan, enum scan_type type,
 	uint8_t *buffer, int scan_size, struct scan_command *command)
 {
-	tap_state_t saved_end_state;
+	enum tap_state saved_end_state;
 
 	buspirate_tap_make_space(1, scan_size+8);
 	/* is 8 correct ? (2 moves = 16) */
@@ -669,14 +654,13 @@ static void buspirate_scan(bool ir_scan, enum scan_type type,
 		buspirate_state_move();
 }
 
-static void buspirate_stableclocks(int num_cycles)
+static void buspirate_stableclocks(unsigned int num_cycles)
 {
-	int i;
 	int tms = (tap_get_state() == TAP_RESET ? 1 : 0);
 
 	buspirate_tap_make_space(0, num_cycles);
 
-	for (i = 0; i < num_cycles; i++)
+	for (unsigned int i = 0; i < num_cycles; i++)
 		buspirate_tap_append(tms, 0);
 }
 
@@ -1458,7 +1442,7 @@ static void buspirate_swd_read_reg(uint8_t cmd, uint32_t *value, uint32_t ap_del
 			data);
 
 	switch (ack) {
-	 case SWD_ACK_OK:
+	case SWD_ACK_OK:
 		if (parity != parity_u32(data)) {
 			LOG_DEBUG("Read data parity mismatch %x %x", parity, parity_u32(data));
 			queued_retval = ERROR_FAIL;
@@ -1469,15 +1453,15 @@ static void buspirate_swd_read_reg(uint8_t cmd, uint32_t *value, uint32_t ap_del
 		if (cmd & SWD_CMD_APNDP)
 			buspirate_swd_idle_clocks(ap_delay_clk);
 		return;
-	 case SWD_ACK_WAIT:
+	case SWD_ACK_WAIT:
 		LOG_DEBUG("SWD_ACK_WAIT");
 		buspirate_swd_clear_sticky_errors();
 		return;
-	 case SWD_ACK_FAULT:
+	case SWD_ACK_FAULT:
 		LOG_DEBUG("SWD_ACK_FAULT");
 		queued_retval = ack;
 		return;
-	 default:
+	default:
 		LOG_DEBUG("No valid acknowledge: ack=%d", ack);
 		queued_retval = ack;
 		return;
@@ -1516,19 +1500,19 @@ static void buspirate_swd_write_reg(uint8_t cmd, uint32_t value, uint32_t ap_del
 			value);
 
 	switch (ack) {
-	 case SWD_ACK_OK:
+	case SWD_ACK_OK:
 		if (cmd & SWD_CMD_APNDP)
 			buspirate_swd_idle_clocks(ap_delay_clk);
 		return;
-	 case SWD_ACK_WAIT:
+	case SWD_ACK_WAIT:
 		LOG_DEBUG("SWD_ACK_WAIT");
 		buspirate_swd_clear_sticky_errors();
 		return;
-	 case SWD_ACK_FAULT:
+	case SWD_ACK_FAULT:
 		LOG_DEBUG("SWD_ACK_FAULT");
 		queued_retval = ack;
 		return;
-	 default:
+	default:
 		LOG_DEBUG("No valid acknowledge: ack=%d", ack);
 		queued_retval = ack;
 		return;

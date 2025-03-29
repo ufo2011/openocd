@@ -1,21 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2010 by Oleksandr Tymoshenko <gonzo@bluezbox.com>       *
  *   Based on mips_m4k code:                                               *
  *       Copyright (C) 2008 by Spencer Oliver <spen@spen-soft.co.uk>       *
  *       Copyright (C) 2008 by David T.L. Wong                             *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -311,8 +300,8 @@ static int avr32_ap7k_deassert_reset(struct target *target)
 	return ERROR_OK;
 }
 
-static int avr32_ap7k_resume(struct target *target, int current,
-	target_addr_t address, int handle_breakpoints, int debug_execution)
+static int avr32_ap7k_resume(struct target *target, bool current,
+	target_addr_t address, bool handle_breakpoints, bool debug_execution)
 {
 	struct avr32_ap7k_common *ap7k = target_to_ap7k(target);
 	struct breakpoint *breakpoint = NULL;
@@ -320,7 +309,7 @@ static int avr32_ap7k_resume(struct target *target, int current,
 	int retval;
 
 	if (target->state != TARGET_HALTED) {
-		LOG_WARNING("target not halted");
+		LOG_TARGET_ERROR(target, "not halted");
 		return ERROR_TARGET_NOT_HALTED;
 	}
 
@@ -332,7 +321,7 @@ static int avr32_ap7k_resume(struct target *target, int current,
 		*/
 	}
 
-	/* current = 1: continue on current pc, otherwise continue at <address> */
+	/* current = true: continue on current pc, otherwise continue at <address> */
 	if (!current) {
 #if 0
 		if (retval != ERROR_OK)
@@ -393,8 +382,8 @@ static int avr32_ap7k_resume(struct target *target, int current,
 	return ERROR_OK;
 }
 
-static int avr32_ap7k_step(struct target *target, int current,
-	target_addr_t address, int handle_breakpoints)
+static int avr32_ap7k_step(struct target *target, bool current,
+	target_addr_t address, bool handle_breakpoints)
 {
 	LOG_ERROR("%s: implement me", __func__);
 
@@ -442,7 +431,7 @@ static int avr32_ap7k_read_memory(struct target *target, target_addr_t address,
 		count);
 
 	if (target->state != TARGET_HALTED) {
-		LOG_WARNING("target not halted");
+		LOG_TARGET_ERROR(target, "not halted");
 		return ERROR_TARGET_NOT_HALTED;
 	}
 
@@ -482,7 +471,7 @@ static int avr32_ap7k_write_memory(struct target *target, target_addr_t address,
 		count);
 
 	if (target->state != TARGET_HALTED) {
-		LOG_WARNING("target not halted");
+		LOG_TARGET_ERROR(target, "not halted");
 		return ERROR_TARGET_NOT_HALTED;
 	}
 

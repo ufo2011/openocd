@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
@@ -7,19 +9,6 @@
  *                                                                         *
  *   Copyright (C) 2008 by Hongtao Zheng                                   *
  *   hontor@126.com                                                        *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -68,7 +57,7 @@ static const struct arm9tdmi_vector {
 	{"dabt", ARM9TDMI_DABT_VECTOR},
 	{"irq", ARM9TDMI_IRQ_VECTOR},
 	{"fiq", ARM9TDMI_FIQ_VECTOR},
-	{0, 0},
+	{NULL, 0},
 };
 
 int arm9tdmi_examine_debug_reason(struct target *target)
@@ -832,9 +821,9 @@ COMMAND_HANDLER(handle_arm9tdmi_catch_vectors_command)
 		else if (strcmp(CMD_ARGV[0], "none") == 0) {
 			/* do nothing */
 		} else {
-			for (unsigned i = 0; i < CMD_ARGC; i++) {
+			for (unsigned int i = 0; i < CMD_ARGC; i++) {
 				/* go through list of vectors */
-				unsigned j;
+				unsigned int j;
 				for (j = 0; arm9tdmi_vectors[j].name; j++) {
 					if (strcmp(CMD_ARGV[i], arm9tdmi_vectors[j].name) == 0) {
 						vector_catch_value |= arm9tdmi_vectors[j].value;
@@ -861,7 +850,7 @@ COMMAND_HANDLER(handle_arm9tdmi_catch_vectors_command)
 	}
 
 	/* output current settings */
-	for (unsigned i = 0; arm9tdmi_vectors[i].name; i++) {
+	for (unsigned int i = 0; arm9tdmi_vectors[i].name; i++) {
 		command_print(CMD, "%s: %s", arm9tdmi_vectors[i].name,
 			(vector_catch_value & arm9tdmi_vectors[i].value)
 				? "catch" : "don't catch");

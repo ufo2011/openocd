@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2010 by Antonio Borneo <borneo.antonio@gmail.com>       *
  *   Modified by Megan Wachs <megan@sifive.com> from the original stmsmi.c *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /* The Freedom E SPI controller is a SPI bus controller
@@ -523,6 +512,12 @@ static int fespi_write(struct flash_bank *bank, const uint8_t *buffer,
 		}
 	}
 
+	struct riscv_info *riscv = riscv_info(target);
+	if (!is_riscv(riscv)) {
+		LOG_ERROR("Unexpected target type");
+		return ERROR_FAIL;
+	}
+
 	unsigned int xlen = riscv_xlen(target);
 	struct working_area *algorithm_wa = NULL;
 	struct working_area *data_wa = NULL;
@@ -536,7 +531,7 @@ static int fespi_write(struct flash_bank *bank, const uint8_t *buffer,
 		bin_size = sizeof(riscv64_bin);
 	}
 
-	unsigned data_wa_size = 0;
+	unsigned int data_wa_size = 0;
 	if (target_alloc_working_area(target, bin_size, &algorithm_wa) == ERROR_OK) {
 		retval = target_write_buffer(target, algorithm_wa->address,
 				bin_size, bin);
@@ -756,9 +751,9 @@ static int fespi_probe(struct flash_bank *bank)
 				target_device->name, bank->base);
 
 	} else {
-	  LOG_DEBUG("Assuming FESPI as specified at address " TARGET_ADDR_FMT
-			  " with ctrl at " TARGET_ADDR_FMT, fespi_info->ctrl_base,
-			  bank->base);
+		LOG_DEBUG("Assuming FESPI as specified at address " TARGET_ADDR_FMT
+				  " with ctrl at " TARGET_ADDR_FMT, fespi_info->ctrl_base,
+				  bank->base);
 	}
 
 	/* read and decode flash ID; returns in SW mode */

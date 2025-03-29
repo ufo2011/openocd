@@ -1,20 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *    Copyright (C) 2009 by David Brownell                                 *
  *                                                                         *
  *    Copyright (C) ST-Ericsson SA 2011 michel.jaouen@stericsson.com       *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -85,7 +74,7 @@ static void armv7a_show_fault_registers(struct target *target)
 		", IFAR: %8.8" PRIx32, ifsr, ifar);
 
 done:
-	/* (void) */ dpm->finish(dpm);
+	dpm->finish(dpm);
 }
 
 
@@ -112,14 +101,14 @@ static int armv7a_read_midr(struct target *target)
 	armv7a->arch = (midr >> 16) & 0xf;
 	armv7a->variant = (midr >> 20) & 0xf;
 	armv7a->implementor = (midr >> 24) & 0xff;
-	LOG_INFO("%s rev %" PRIx32 ", partnum %" PRIx32 ", arch %" PRIx32
-			 ", variant %" PRIx32 ", implementor %" PRIx32,
-		 target->cmd_name,
-		 armv7a->rev,
-		 armv7a->partnum,
-		 armv7a->arch,
-		 armv7a->variant,
-		 armv7a->implementor);
+	LOG_TARGET_DEBUG(target,
+		"rev %" PRIx32 ", partnum %" PRIx32 ", arch %" PRIx32
+		", variant %" PRIx32 ", implementor %" PRIx32,
+		armv7a->rev,
+		armv7a->partnum,
+		armv7a->arch,
+		armv7a->variant,
+		armv7a->implementor);
 
 done:
 	dpm->finish(dpm);
@@ -484,7 +473,7 @@ int armv7a_identify_cache(struct target *target)
 	/*  if no l2 cache initialize l1 data cache flush function function */
 	if (!armv7a->armv7a_mmu.armv7a_cache.flush_all_data_cache) {
 		armv7a->armv7a_mmu.armv7a_cache.flush_all_data_cache =
-			armv7a_cache_auto_flush_all_data;
+			armv7a_cache_flush_all_data;
 	}
 
 	armv7a->armv7a_mmu.armv7a_cache.info = 1;
@@ -536,7 +525,6 @@ int armv7a_init_arch_info(struct target *target, struct armv7a_common *armv7a)
 	armv7a->armv7a_mmu.armv7a_cache.info = -1;
 	armv7a->armv7a_mmu.armv7a_cache.outer_cache = NULL;
 	armv7a->armv7a_mmu.armv7a_cache.flush_all_data_cache = NULL;
-	armv7a->armv7a_mmu.armv7a_cache.auto_cache_enabled = 1;
 	return ERROR_OK;
 }
 

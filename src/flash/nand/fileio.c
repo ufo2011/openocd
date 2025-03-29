@@ -1,22 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2007 by Dominic Rath <Dominic.Rath@gmx.de>              *
  *   Copyright (C) 2002 Thomas Gleixner <tglx@linutronix.de>               *
  *   Copyright (C) 2009 Zachary T Welch <zw@superlucidity.net>             *
  *                                                                         *
  *   Partially based on drivers/mtd/nand_ids.c from Linux.                 *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -118,7 +107,7 @@ COMMAND_HELPER(nand_fileio_parse_args, struct nand_fileio_state *state,
 {
 	nand_fileio_init(state);
 
-	unsigned minargs = need_size ? 4 : 3;
+	unsigned int minargs = need_size ? 4 : 3;
 	if (minargs > CMD_ARGC)
 		return ERROR_COMMAND_SYNTAX_ERROR;
 
@@ -142,7 +131,7 @@ COMMAND_HELPER(nand_fileio_parse_args, struct nand_fileio_state *state,
 	}
 
 	if (minargs < CMD_ARGC) {
-		for (unsigned i = minargs; i < CMD_ARGC; i++) {
+		for (unsigned int i = minargs; i < CMD_ARGC; i++) {
 			if (!strcmp(CMD_ARGV[i], "oob_raw"))
 				state->oob_format |= NAND_OOB_RAW;
 			else if (!strcmp(CMD_ARGV[i], "oob_only"))

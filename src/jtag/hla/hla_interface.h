@@ -1,22 +1,11 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /***************************************************************************
  *   Copyright (C) 2011 by Mathias Kuester                                 *
  *   Mathias Kuester <kesmtp@freenet.de>                                   *
  *                                                                         *
  *   Copyright (C) 2012 by Spencer Oliver                                  *
  *   spen@spen-soft.co.uk                                                  *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifndef OPENOCD_JTAG_HLA_HLA_INTERFACE_H
@@ -31,7 +20,7 @@ extern const char *hl_transports[];
 
 #define HLA_MAX_USB_IDS 16
 
-struct hl_interface_param_s {
+struct hl_interface_param {
 	/** */
 	const char *device_desc;
 	/** List of recognised VIDs */
@@ -42,17 +31,15 @@ struct hl_interface_param_s {
 	enum hl_transports transport;
 	/** */
 	bool connect_under_reset;
-	/** Initial interface clock clock speed */
-	int initial_interface_speed;
 	/** */
 	bool use_stlink_tcp;
 	/** */
 	uint16_t stlink_tcp_port;
 };
 
-struct hl_interface_s {
+struct hl_interface {
 	/** */
-	struct hl_interface_param_s param;
+	struct hl_interface_param param;
 	/** */
 	const struct hl_layout *layout;
 	/** */

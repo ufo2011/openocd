@@ -1,22 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
  *                                                                         *
  *   Copyright (C) 2007,2008 Øyvind Harboe                                 *
  *   oyvind.harboe@zylin.com                                               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -30,7 +19,7 @@
 #endif
 
 int arm_jtag_set_instr_inner(struct jtag_tap *tap,
-		uint32_t new_instr, void *no_verify_capture, tap_state_t end_state)
+		uint32_t new_instr, void *no_verify_capture, enum tap_state end_state)
 {
 	struct scan_field field;
 	uint8_t t[4] = { 0 };
@@ -52,7 +41,7 @@ int arm_jtag_set_instr_inner(struct jtag_tap *tap,
 	return ERROR_OK;
 }
 
-int arm_jtag_scann_inner(struct arm_jtag *jtag_info, uint32_t new_scan_chain, tap_state_t end_state)
+int arm_jtag_scann_inner(struct arm_jtag *jtag_info, uint32_t new_scan_chain, enum tap_state end_state)
 {
 	int retval = ERROR_OK;
 

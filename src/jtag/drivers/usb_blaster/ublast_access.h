@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
 /*
  *   Driver for USB-JTAG, Altera USB-Blaster and compatibles
  *
@@ -9,19 +11,6 @@
  *   Copyright (C) 2011 Ali Lown ali@lown.me.uk
  *   Copyright (C) 2009 Catalin Patulea cat@vv.carleton.ca
  *   Copyright (C) 2006 Kolja Waschk usbjtag@ixo.de
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -41,7 +30,7 @@ struct ublast_lowlevel {
 
 	int (*write)(struct ublast_lowlevel *low, uint8_t *buf, int size,
 		     uint32_t *bytes_written);
-	int (*read)(struct ublast_lowlevel *low, uint8_t *buf, unsigned size,
+	int (*read)(struct ublast_lowlevel *low, uint8_t *buf, unsigned int size,
 		    uint32_t *bytes_read);
 	int (*open)(struct ublast_lowlevel *low);
 	int (*close)(struct ublast_lowlevel *low);

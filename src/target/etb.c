@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2007 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -465,12 +454,12 @@ static int etb_init(struct etm_context *etm_ctx)
 	return ERROR_OK;
 }
 
-static trace_status_t etb_status(struct etm_context *etm_ctx)
+static enum trace_status etb_status(struct etm_context *etm_ctx)
 {
 	struct etb *etb = etm_ctx->capture_driver_priv;
 	struct reg *control = &etb->reg_cache->reg_list[ETB_CTRL];
 	struct reg *status = &etb->reg_cache->reg_list[ETB_STATUS];
-	trace_status_t retval = 0;
+	enum trace_status retval = 0;
 	int etb_timeout = 100;
 
 	etb->etm_ctx = etm_ctx;

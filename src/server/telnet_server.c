@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2005 by Dominic Rath                                    *
  *   Dominic.Rath@gmx.de                                                   *
@@ -7,19 +9,6 @@
  *                                                                         *
  *   Copyright (C) 2008 by Spencer Oliver                                  *
  *   spen@spen-soft.co.uk                                                  *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -104,7 +93,7 @@ static int telnet_output(struct command_context *cmd_ctx, const char *line)
 	return telnet_outputline(connection, line);
 }
 
-static void telnet_log_callback(void *priv, const char *file, unsigned line,
+static void telnet_log_callback(void *priv, const char *file, unsigned int line,
 	const char *function, const char *string)
 {
 	struct connection *connection = priv;
@@ -222,9 +211,8 @@ static int telnet_new_connection(struct connection *connection)
 {
 	struct telnet_connection *telnet_connection;
 	struct telnet_service *telnet_service = connection->service->priv;
-	int i;
 
-	telnet_connection = malloc(sizeof(struct telnet_connection));
+	telnet_connection = calloc(1, sizeof(struct telnet_connection));
 
 	if (!telnet_connection) {
 		LOG_ERROR("Failed to allocate telnet connection.");
@@ -234,9 +222,6 @@ static int telnet_new_connection(struct connection *connection)
 	connection->priv = telnet_connection;
 
 	/* initialize telnet connection information */
-	telnet_connection->closed = false;
-	telnet_connection->line_size = 0;
-	telnet_connection->line_cursor = 0;
 	telnet_connection->prompt = strdup("> ");
 	telnet_connection->prompt_visible = true;
 	telnet_connection->state = TELNET_STATE_DATA;
@@ -257,11 +242,6 @@ static int telnet_new_connection(struct connection *connection)
 	telnet_write(connection, "\r", 1);
 	telnet_prompt(connection);
 
-	/* initialize history */
-	for (i = 0; i < TELNET_LINE_HISTORY_SIZE; i++)
-		telnet_connection->history[i] = NULL;
-	telnet_connection->next_history = 0;
-	telnet_connection->current_history = 0;
 	telnet_load_history(telnet_connection);
 
 	log_add_callback(telnet_log_callback, connection);
@@ -590,7 +570,7 @@ static void telnet_auto_complete(struct connection *connection)
 		struct list_head lh;
 	};
 
-	LIST_HEAD(matches);
+	OOCD_LIST_HEAD(matches);
 
 	/* - user command sequence, either at line beginning
 	 *   or we start over after these characters ';', '[', '{'
@@ -624,7 +604,11 @@ static void telnet_auto_complete(struct connection *connection)
 	while ((usr_cmd_pos < t_con->line_cursor) && isspace(t_con->line[usr_cmd_pos]))
 		usr_cmd_pos++;
 
-	/* user command length */
+	/* check user command length */
+	if (t_con->line_cursor < usr_cmd_pos) {
+		telnet_bell(connection);
+		return;
+	}
 	size_t usr_cmd_len = t_con->line_cursor - usr_cmd_pos;
 
 	/* optimize multiple spaces in the user command,
@@ -983,7 +967,6 @@ int telnet_init(char *banner)
 	return ERROR_OK;
 }
 
-/* daemon configuration command telnet_port */
 COMMAND_HANDLER(handle_telnet_port_command)
 {
 	return CALL_COMMAND_HANDLER(server_pipe_command, &telnet_port);
@@ -994,22 +977,33 @@ COMMAND_HANDLER(handle_exit_command)
 	return ERROR_COMMAND_CLOSE_CONNECTION;
 }
 
-static const struct command_registration telnet_command_handlers[] = {
+static const struct command_registration telnet_subcommand_handlers[] = {
 	{
-		.name = "exit",
-		.handler = handle_exit_command,
-		.mode = COMMAND_EXEC,
-		.usage = "",
-		.help = "exit telnet session",
-	},
-	{
-		.name = "telnet_port",
+		.name = "port",
 		.handler = handle_telnet_port_command,
 		.mode = COMMAND_CONFIG,
 		.help = "Specify port on which to listen "
 			"for incoming telnet connections.  "
-			"Read help on 'gdb_port'.",
+			"Read help on 'gdb port'.",
 		.usage = "[port_num]",
+	},
+	COMMAND_REGISTRATION_DONE
+};
+
+static const struct command_registration telnet_command_handlers[] = {
+	{
+		.name = "exit",
+		.handler = handle_exit_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "exit telnet session",
+	},
+	{
+		.name = "telnet",
+		.chain = telnet_subcommand_handlers,
+		.mode = COMMAND_CONFIG,
+		.help = "telnet commands",
+		.usage = "",
 	},
 	COMMAND_REGISTRATION_DONE
 };

@@ -1,22 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *  Copyright (C) 2011 by Rodrigo L. Rosa                                 *
  *  rodrigorosa.LG@gmail.com                                              *
  *                                                                        *
  *  Based on dsp563xx_once.h written by Mathias Kuester                   *
  *  mkdorg@users.sourceforge.net                                          *
- *                                                                        *
- *  This program is free software; you can redistribute it and/or modify  *
- *  it under the terms of the GNU General Public License as published by  *
- *  the Free Software Foundation; either version 2 of the License, or     *
- *  (at your option) any later version.                                   *
- *                                                                        *
- *  This program is distributed in the hope that it will be useful,       *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *  GNU General Public License for more details.                          *
- *                                                                        *
- *  You should have received a copy of the GNU General Public License     *
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -27,7 +16,7 @@
 #include "target_type.h"
 #include "dsp5680xx.h"
 
-struct dsp5680xx_common dsp5680xx_context;
+static struct dsp5680xx_common dsp5680xx_context;
 
 #define _E "DSP5680XX_ERROR:%d\nAt:%s:%d:%s"
 #define err_check(r, c, m) if (r != ERROR_OK) {LOG_ERROR(_E, c, __func__, __LINE__, m); return r; }
@@ -55,7 +44,7 @@ static int reset_jtag(void)
 {
 	int retval;
 
-	tap_state_t states[2];
+	enum tap_state states[2];
 
 	const char *cp = "RESET";
 
@@ -1004,8 +993,8 @@ static int dsp5680xx_poll(struct target *target)
 	return ERROR_OK;
 }
 
-static int dsp5680xx_resume(struct target *target, int current,
-			    target_addr_t address, int hb, int d)
+static int dsp5680xx_resume(struct target *target, bool current,
+		target_addr_t address, bool handle_breakpoints, bool debug_execution)
 {
 	if (target->state == TARGET_RUNNING) {
 		LOG_USER("Target already running.");
@@ -1183,7 +1172,7 @@ static int dsp5680xx_read(struct target *t, target_addr_t a, uint32_t size,
 	dsp5680xx_context.flush = 0;
 	int counter = FLUSH_COUNT_READ_WRITE;
 
-	for (unsigned i = 0; i < count; i++) {
+	for (unsigned int i = 0; i < count; i++) {
 		if (--counter == 0) {
 			dsp5680xx_context.flush = 1;
 			counter = FLUSH_COUNT_READ_WRITE;
@@ -2059,7 +2048,7 @@ int dsp5680xx_f_wr(struct target *t, const uint8_t *b, uint32_t a, uint32_t coun
 	retval = core_tx_upper_data(target, tmp, &drscan_data);
 	err_check_propagate(retval);
 
-	retval = dsp5680xx_resume(target, 0, ram_addr, 0, 0);
+	retval = dsp5680xx_resume(target, false, ram_addr, false, false);
 	err_check_propagate(retval);
 
 	int counter = FLUSH_COUNT_FLASH;
@@ -2211,8 +2200,8 @@ int dsp5680xx_f_lock(struct target *target)
 	struct jtag_tap *tap_chp;
 
 	struct jtag_tap *tap_cpu;
-	uint16_t lock_word[] = { HFM_LOCK_FLASH };
-	retval = dsp5680xx_f_wr(target, (uint8_t *) (lock_word), HFM_LOCK_ADDR_L, 2, 1);
+	uint16_t lock_word = HFM_LOCK_FLASH;
+	retval = dsp5680xx_f_wr(target, (uint8_t *)&lock_word, HFM_LOCK_ADDR_L, 2, 1);
 	err_check_propagate(retval);
 
 	jtag_add_reset(0, 1);
@@ -2245,8 +2234,8 @@ int dsp5680xx_f_lock(struct target *target)
 	return retval;
 }
 
-static int dsp5680xx_step(struct target *target, int current, target_addr_t address,
-			  int handle_breakpoints)
+static int dsp5680xx_step(struct target *target, bool current, target_addr_t address,
+		bool handle_breakpoints)
 {
 	err_check(ERROR_FAIL, DSP5680XX_ERROR_NOT_IMPLEMENTED_STEP,
 		  "Not implemented yet.");

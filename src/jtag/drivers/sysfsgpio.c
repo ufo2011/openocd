@@ -1,18 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 /***************************************************************************
  *   Copyright (C) 2012 by Creative Product Design, marc @ cpdesign.com.au *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  ***************************************************************************/
 
 /* 2014-12: Addition of the SWD protocol support is based on the initial work
@@ -266,7 +255,7 @@ static int sysfsgpio_swd_write(int swclk, int swdio)
  * The sysfs value will read back either '0' or '1'. The trick here is to call
  * lseek to bypass buffering in the sysfs kernel driver.
  */
-static bb_value_t sysfsgpio_read(void)
+static enum bb_value sysfsgpio_read(void)
 {
 	char buf[1];
 
@@ -576,13 +565,13 @@ struct adapter_driver sysfsgpio_adapter_driver = {
 	.swd_ops = &bitbang_swd,
 };
 
-static struct bitbang_interface sysfsgpio_bitbang = {
+static const struct bitbang_interface sysfsgpio_bitbang = {
 	.read = sysfsgpio_read,
 	.write = sysfsgpio_write,
 	.swdio_read = sysfsgpio_swdio_read,
 	.swdio_drive = sysfsgpio_swdio_drive,
 	.swd_write = sysfsgpio_swd_write,
-	.blink = 0
+	.blink = NULL,
 };
 
 /* helper func to close and cleanup files only if they were valid/ used */
